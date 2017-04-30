@@ -44,7 +44,7 @@ import socket
 
 s = socket.socket()         # Create a socket object
 host = "130.211.191.171"
-port = 80               # Reserve a port for your service.
+port = 8090            # Reserve a port for your service.
 s.connect((host, port))
 
 message = "Hello From the other side\n"

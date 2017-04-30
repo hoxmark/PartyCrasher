@@ -22,7 +22,7 @@ public class GreetingClient {
             System.out.println("Server says " + in.readUTF());
             client.close();
         }catch(IOException e) {
-            e.printStackTrace();
+            e.printStackTrace();                        
         }
     }
 }
