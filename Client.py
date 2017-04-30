@@ -43,8 +43,8 @@ import socket
 
 
 s = socket.socket()         # Create a socket object
-host = socket.gethostname() # Get local machine name
-port = 8090                # Reserve a port for your service.
+host = "130.211.191.171"
+port = 80               # Reserve a port for your service.
 s.connect((host, port))
 
 message = "Hello From the other side\n"
