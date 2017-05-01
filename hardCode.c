@@ -132,11 +132,24 @@ int CliqueCount(int *g,int gsize)
 }
 
 
+void print_counterexample(int *g, int m){
+    printf("*-*-*-*-*-*-*-*-*-*-* Counter example at %d *-*-*-*-*-*-*-*-*-*-*\n", m);
+    for(int i = 0; i < m; i++){
+        for(int j = 0; j< m; j++){
+            printf("%d ", g[i * m + j]);
+        }
+        printf("\n");
+    }
+}
 
+int findLine(int a){
+	
+}
 
 int main(int argc, char **argv){	
 	printf("Ramsey test \n");
-	int MAXROW = 20;
+	
+	int MAXROW = atoi(argv[1]);
 	int MAXCELLS = MAXROW*MAXROW;
 	// int g[11][11] = {
 	// 	{0,0,0,0,0,0,0,0,0,0,0}, 
@@ -162,6 +175,9 @@ int main(int argc, char **argv){
 		
 		if (newAns == 0){
 			printf("1found \n");
+
+			print_counterexample(g, MAXROW);
+
 			return 0;
 			
 		}else if (newAns<ans){

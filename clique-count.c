@@ -149,8 +149,6 @@ int main(void){
 		{0,0,0,0,0,0,0,0,0,0,0}, 
 		{0,0,0,0,0,0,0,0,0,0,0}
 	};
-	
-
 
 	int ans = CliqueCount(g, 11);
 	printf("Answer: %d\n", ans);
