@@ -132,25 +132,75 @@ int CliqueCount(int *g,int gsize)
 }
 
 
+void print_counterexample(int *g, int m){
+    printf("*-*-*-*-*-*-*-*-*-*-* Counter example at %d *-*-*-*-*-*-*-*-*-*-*\n", m);
+    for(int i = 0; i < m; i++){
+        for(int j = 0; j< m; j++){
+            printf("%d ", g[i * m + j]);
+        }
+        printf("\n");
+    }
+}
 
+int findLine(int a){
+	
+}
 
-int main(void){
-	printf("Ramsey test\n");
-	int g[11][11] = {
-		{0,0,0,0,0,0,0,0,0,0,0}, 
-		{0,0,0,0,0,0,0,0,0,0,0}, 
-		{0,0,0,0,0,0,0,0,0,0,0}, 
-		{0,0,0,0,0,0,0,0,0,0,0}, 
-		{0,0,0,0,0,0,0,0,0,0,0}, 
-		{0,0,0,0,0,0,0,0,0,0,0}, 
-		{0,0,0,0,0,0,0,0,0,0,0}, 
-		{0,0,0,0,0,0,0,0,0,0,0}, 
-		{0,0,0,0,0,0,0,0,0,0,0}, 
-		{0,0,0,0,0,0,0,0,0,0,0}, 
-		{0,0,0,0,0,0,0,0,0,0,0}
-	};
+int main(int argc, char **argv){	
+	printf("Ramsey test \n");
+	
+	int MAXROW = atoi(argv[1]);
+	int MAXCELLS = MAXROW*MAXROW;
+	// int g[11][11] = {
+	// 	{0,0,0,0,0,0,0,0,0,0,0}, 
+	// 	{0,0,0,0,0,0,0,0,0,0,0}, 
+	// 	{0,0,0,0,0,0,0,0,0,0,0}, 
+	// 	{0,0,0,0,0,0,0,0,0,0,0}, 
+	// 	{0,0,0,0,0,0,0,0,0,0,0}, 
+	// 	{0,0,0,0,0,0,0,0,0,0,0}, 
+	// 	{0,0,0,0,0,0,0,0,0,0,0}, 
+	// 	{0,0,0,0,0,0,0,0,0,0,0}, 
+	// 	{0,0,0,0,0,0,0,0,0,0,0}, 
+	// 	{0,0,0,0,0,0,0,0,0,0,0}, 
+	// 	{0,0,0,0,0,0,0,0,0,0,0}
+	// };
+	int g[MAXROW][MAXROW] ;
+	memset(g, 0, sizeof(g[0][0]) * MAXCELLS);
+	int ans; 
+	int howManyDone =0;
+	int soFar = 0;
+	while (1){
+		g[0][howManyDone+soFar] = 1;
+		int newAns = CliqueCount(g, MAXROW);
+		
+		if (newAns == 0){
+			printf("1found \n");
 
-	int ans = CliqueCount(g, 11);
+			print_counterexample(g, MAXROW);
+
+			return 0;
+			
+		}else if (newAns<ans){
+			printf("2. \t Newans: %d \t howManyDone: %d \t SoFar: %d \n", newAns, howManyDone, soFar);
+			soFar++;
+		} else {
+
+			g[0][howManyDone+soFar] = 0;
+			
+			if (soFar>MAXCELLS){
+				howManyDone++;
+				soFar =0;
+			} else {
+
+				soFar ++;
+			}
+			printf("3. \t Newans: %d \t howManyDone: %d \t SoFar: %d \n", newAns, howManyDone, soFar);
+		}
+
+		ans = newAns;
+	}
+
+	 
 	printf("Answer: %d\n", ans);
 	
 }
