@@ -465,5 +465,31 @@ int main(int argc, char** argv) {
                 g[row * m + column] = 0;
         }
         previous = c_count;
+
+
+        int m2 = get_best_example2();
+        if(m2 > m){
+            m = m2;
+            previous = INT_MAX;
+            char name[40];
+            sprintf(name, "counterexamples/%d.txt", m);
+            FILE* file = fopen(name, "r");
+
+            printf("%s\n", name);
+
+            int count;
+            fscanf(file, "%d", &m);
+            fscanf(file, "%d", &count);
+            printf("M: %d\n", m);
+            printf("Count: %d\n", count);
+
+            g = (int*)malloc(m * m * sizeof(int));
+
+            int i;
+            for (i = 0; i < m * m; i++) {
+                fscanf(file, "%d", &g[i]);
+            }
+            fclose(file);
+        }
     }
 }
