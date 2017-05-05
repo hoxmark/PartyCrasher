@@ -41,15 +41,12 @@ public class GreetingServer extends Thread {
                     if (listOfFiles[i].isFile()) {
                         String num = listOfFiles[i].getName().split("\\.")[0]; 
                         if(!num.trim().isEmpty()){
-                            System.out.println(Integer.parseInt(num)); 
                             counterexamples.add(Integer.parseInt(num));
                         }
                     }
                 }
                 System.out.println("Sending best: " + Collections.max(counterexamples)); 
-                System.out.println(counterexamples); 
                 out.println(Collections.max(counterexamples)); 
-
                 client.close();
 
             } catch (SocketTimeoutException s) {
