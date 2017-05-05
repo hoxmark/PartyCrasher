@@ -252,16 +252,17 @@ int CliqueCount(int* g, int gsize) {
 int random_int(int min, int max) { return min + rand() % (max - min); }
 
 void print_counterexample(int* g, int m) {
-    for (int i = 0; i < (m - 11) / 2; i++) {
+    int i, j;
+    for ( i = 0; i < (m - 11) / 2; i++) {
         printf("*-");
     }
     printf(" Counter example at %d ", m);
-    for (int i = 0; i < (m - 11) / 2; i++) {
+    for ( i = 0; i < (m - 11) / 2; i++) {
         printf("-*");
     }
     printf("\n");
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < m; j++) {
+    for ( i = 0; i < m; i++) {
+        for ( j = 0; j < m; j++) {
             printf("%d ", g[i * m + j]);
         }
         printf("\n");
@@ -446,8 +447,9 @@ int main(int argc, char** argv) {
             int* g2 = (int*)malloc((m + 1) * (m + 1) * sizeof(int));
             memset(g2, 0, sizeof(g2[0]) * (m + 1) * (m + 1));
 
-            for (int i = 0; i < m; i++) {
-                for (int j = i; j < m; j++) {
+            int i, j;
+            for (i = 0; i < m; i++) {
+                for (j = i; j < m; j++) {
                     g2[i * (m + 1) + j] = g[i * m + j];
                 }
             }
