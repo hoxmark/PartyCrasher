@@ -113,7 +113,7 @@ int get_best_example() {
 }
 
 void load_counterexample(char* name, int m) {
-    free(g); 
+    free(g);
     FILE* file = fopen(name, "r");
 
     printf("%s\n", name);
@@ -149,6 +149,13 @@ void increment_counter(){
     g = g2;
 }
 
+void flip_entry(int *matrix, int row, int column, int m){
+    if (matrix[row * m + column] == 0)
+        matrix[row * m + column] = 1;
+    else
+        matrix[row * m + column] = 0;
+}
+
 int main(int argc, char** argv) {
     if (argc == 2) {
         FILE* file = fopen(argv[1], "r");
@@ -182,11 +189,7 @@ int main(int argc, char** argv) {
         int row = random_int(0, m);
         int column = random_int(row, m);
 
-        if (g[row * m + column] == 0)
-            g[row * m + column] = 1;
-        else
-            g[row * m + column] = 0;
-
+        flip_entry(g, row, column, m);
         c_count = CliqueCount(g, m);
         printf("Number of cliques at %d: %d\n", m, c_count);
         if (c_count == 0) {
@@ -197,10 +200,7 @@ int main(int argc, char** argv) {
 
         // Flip back if worse
         if (c_count > previous) {
-            if (g[row * m + column] == 0)
-                g[row * m + column] = 1;
-            else
-                g[row * m + column] = 0;
+            flip_entry(g, row, column, m);
         }
 
         previous = c_count;
