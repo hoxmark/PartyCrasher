@@ -1,0 +1,14 @@
+############
+#
+# 
+# Out first submit
+#
+############
+
+Universe       = vanilla
+Executable     = client.o  
+requirements   = OpSys == "LINUX" && Arch =="INTEL" 
+Log = client.log
+Output  = client.out                
+                                                  
+Queue 1
