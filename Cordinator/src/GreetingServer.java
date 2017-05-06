@@ -3,12 +3,16 @@
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.*;
-import java.util.Collections; 
 
+import org.omg.CORBA.PRIVATE_MEMBER;
+
+import java.io.*;
+import java.util.Collections;
 
 public class GreetingServer extends Thread {
     private ServerSocket serverSocket;
+    
+    private String R_CONTINE = "CONTINUE";
 
     public GreetingServer(int port) throws IOException {
         serverSocket = new ServerSocket(port);
@@ -22,31 +26,19 @@ public class GreetingServer extends Thread {
                 Socket client = serverSocket.accept();
 
                 System.out.println("Just connected to " + client.getRemoteSocketAddress());
-                // DataInputStream in = new DataInputStream(client.getInputStream());
-                //
-                // System.out.println(in.readUTF());
-                PrintStream out = new PrintStream(client.getOutputStream(), true);
-                // out.writeUTF("Thank you for connecting to " + client.getLocalSocketAddress()
-                //         + "\nGoodbye!");
-                //
-                // out = new PrintStream(s.getOutputStream(), true);
 
-                // out.println("HEY THERE CLIENT! :D ");
+                BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                String line = in.readLine();
 
-                File folder = new File("../../counterexamples/");
-                File[] listOfFiles = folder.listFiles();
-                List<Integer> counterexamples = new ArrayList<>(); 
-
-                for (int i = 0; i < listOfFiles.length; i++) {
-                    if (listOfFiles[i].isFile()) {
-                        String num = listOfFiles[i].getName().split("\\.")[0]; 
-                        if(!num.trim().isEmpty()){
-                            counterexamples.add(Integer.parseInt(num));
-                        }
-                    }
+                switch (line.split("\\s+")[0]) {
+                case "ClientHello":
+                    clientHello(client, line.split("\\s+")[1]);
+                    break;
+                default:
+                    System.out.println("Error: Default in switch");
+                    System.out.println(line.split("\\s+")[0]);
                 }
-                System.out.println("Sending best: " + Collections.max(counterexamples)); 
-                out.println(Collections.max(counterexamples)); 
+
                 client.close();
 
             } catch (SocketTimeoutException s) {
@@ -57,6 +49,37 @@ public class GreetingServer extends Thread {
                 break;
             }
         }
+    }
+
+    void clientHello(Socket client, String clientBest) throws IOException{
+        int clientBestInt = Integer.parseInt(clientBest);
+        String serverBestString = findBestCounterExample();
+        int serverBestInt = Integer.parseInt(serverBestString);
+        
+        PrintStream out = new PrintStream(client.getOutputStream(), true);
+        if (clientBestInt < serverBestInt) {
+            //return best counterexmaple to client
+            System.out.println("serverBestString:"+serverBestString);
+            out.println(serverBestString);            
+        } else {
+            out.println(R_CONTINE);
+        }
+    }
+
+    String findBestCounterExample() {
+        File folder = new File("../../counterexamples/");
+        File[] listOfFiles = folder.listFiles();
+        List<Integer> counterexamples = new ArrayList<>();
+
+        for (int i = 0; i < listOfFiles.length; i++) {
+            if (listOfFiles[i].isFile()) {
+                String num = listOfFiles[i].getName().split("\\.")[0];
+                if (!num.trim().isEmpty()) {
+                    counterexamples.add(Integer.parseInt(num));
+                }
+            }
+        }
+        return Collections.max(counterexamples).toString();
     }
 
     public static void main(String[] args) {
