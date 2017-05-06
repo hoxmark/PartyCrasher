@@ -1,8 +1,24 @@
 
 // sgsize must be >= 5 && <= 10
+#include <arpa/inet.h>
+#include <dirent.h>
+#include <errno.h>
 #include <limits.h>
+#include <netdb.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include <sys/socket.h>
+
+#include <netinet/in.h>
+
+#include <arpa/inet.h>
+
 #include <string.h>
 
 int random_int(int min, int max);
@@ -236,16 +252,17 @@ int CliqueCount(int* g, int gsize) {
 int random_int(int min, int max) { return min + rand() % (max - min); }
 
 void print_counterexample(int* g, int m) {
-    for (int i = 0; i < (m - 11) / 2; i++) {
+    int i, j;
+    for ( i = 0; i < (m - 11) / 2; i++) {
         printf("*-");
     }
     printf(" Counter example at %d ", m);
-    for (int i = 0; i < (m - 11) / 2; i++) {
+    for ( i = 0; i < (m - 11) / 2; i++) {
         printf("-*");
     }
     printf("\n");
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < m; j++) {
+    for ( i = 0; i < m; i++) {
+        for ( j = 0; j < m; j++) {
             printf("%d ", g[i * m + j]);
         }
         printf("\n");
@@ -267,6 +284,100 @@ void write_counterexample(int* g, int m) {
         fprintf(out, "\n");
     }
     fclose(out);
+}
+
+int get_best_example2() {
+    int sock;
+    struct sockaddr_in server;
+    char message[1000], server_reply[2000];
+
+    // Create socket
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == -1) {
+        printf("Could not create socket");
+    }
+    puts("Socket created");
+
+    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_family = AF_INET;
+    server.sin_port = htons(5000);
+
+    // Connect to remote server
+    if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
+        perror("connect failed. Error");
+        return -1;
+    }
+
+    puts("Connected\n");
+
+    // keep communicating with server
+    while (1) {
+        // printf("Enter message : ");
+        // scanf("%s", message);
+
+        // Send some data
+        // if (send(sock, message, strlen(message), 0) < 0) {
+        //     puts("Send failed");
+        //     return ;
+        // }
+
+        // Receive a reply from the server
+        if (recv(sock, server_reply, 2000, 0) < 0) {
+            puts("recv failed");
+            break;
+        }
+
+        // puts("Server reply :");
+        // puts(server_reply);
+        return atoi(server_reply);
+        break;
+    }
+
+    close(sock);
+    return -1;
+}
+
+void get_best_example() {
+
+    int sockfd = 0, n = 0;
+    char recvBuff[1024];
+    struct sockaddr_in serv_addr;
+
+    memset(recvBuff, '0', sizeof(recvBuff));
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        printf("\n Error : Could not create socket \n");
+        return;
+    }
+
+    memset(&serv_addr, '0', sizeof(serv_addr));
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(5000);
+    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    // if (inet_pton(AF_INET, htonl(INADDR_ANY), &serv_addr.sin_addr) <= 0) {
+    //     printf("\n inet_pton error occured\n");
+    //     return;
+    // }
+    //
+    // if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
+    // {
+    //     printf("\n Error : Connect Failed \n");
+    //     return;
+    // }
+
+    while ((n = read(sockfd, recvBuff, sizeof(recvBuff) - 1)) > 0) {
+        recvBuff[n] = 0;
+        if (fputs(recvBuff, stdout) == EOF) {
+            printf("\n Error : Fputs error\n");
+        }
+    }
+
+    if (n < 0) {
+        printf("\n Read error \n");
+    }
+
+    return;
 }
 
 int main(int argc, char** argv) {
@@ -291,13 +402,31 @@ int main(int argc, char** argv) {
     }
 
     else {
-        // Start from m if no counter example is specified.
-        m = 20;
+        // Start from best at server
+        m = 0;
+        m = get_best_example2();
+        char name[40];
+        sprintf(name, "counterexamples/%d.txt", m);
+        FILE* file = fopen(name, "r");
+
+        printf("%s\n", name);
+
+        int count;
+        fscanf(file, "%d", &m);
+        fscanf(file, "%d", &count);
+        printf("M: %d\n", m);
+        printf("Count: %d\n", count);
+
         g = (int*)malloc(m * m * sizeof(int));
-        memset(g, 0, sizeof(g[0]) * m * m);
+
+        int i;
+        for (i = 0; i < m * m; i++) {
+            fscanf(file, "%d", &g[i]);
+        }
+        fclose(file);
     }
 
-    print_counterexample(g, m);
+    // print_counterexample(g, m);
 
     int c_count = INT_MAX;
     int previous = INT_MAX;
@@ -318,8 +447,9 @@ int main(int argc, char** argv) {
             int* g2 = (int*)malloc((m + 1) * (m + 1) * sizeof(int));
             memset(g2, 0, sizeof(g2[0]) * (m + 1) * (m + 1));
 
-            for (int i = 0; i < m; i++) {
-                for (int j = i; j < m; j++) {
+            int i, j;
+            for (i = 0; i < m; i++) {
+                for (j = i; j < m; j++) {
                     g2[i * (m + 1) + j] = g[i * m + j];
                 }
             }
@@ -335,5 +465,31 @@ int main(int argc, char** argv) {
                 g[row * m + column] = 0;
         }
         previous = c_count;
+
+
+        int m2 = get_best_example2();
+        if(m2 > m){
+            m = m2;
+            previous = INT_MAX;
+            char name[40];
+            sprintf(name, "counterexamples/%d.txt", m);
+            FILE* file = fopen(name, "r");
+
+            printf("%s\n", name);
+
+            int count;
+            fscanf(file, "%d", &m);
+            fscanf(file, "%d", &count);
+            printf("M: %d\n", m);
+            printf("Count: %d\n", count);
+
+            g = (int*)malloc(m * m * sizeof(int));
+
+            int i;
+            for (i = 0; i < m * m; i++) {
+                fscanf(file, "%d", &g[i]);
+            }
+            fclose(file);
+        }
     }
 }
