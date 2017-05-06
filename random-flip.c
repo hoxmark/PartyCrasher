@@ -102,49 +102,135 @@ int get_best_example()
     puts("Connected\n");
 
     // keep communicating with server
-    while (1)
+
+    // Send some data
+
+    char clientMessage[100];
+    sprintf(clientMessage, "ClientHello %d\0", m);
+    if (send(sock, clientMessage, strlen(clientMessage), 0) < 0)
     {
-        // Send some data
+        puts("Send failed");
+    }
+    else
+    {
+        puts("send succes");
+    }
 
-        char clientMessage[100];
-        sprintf(clientMessage, "ClientHello %d\0", m);
-        if (send(sock, clientMessage, strlen(clientMessage), 0) < 0)
-        {
-            puts("Send failed");
-        }
-        else
-        {
-            puts("send succes");
-        }
+    shutdown(sock, 1); // outgoing
 
-        shutdown(sock, 1); // outgoing
-        
-        // Receive a reply from the server
-        if (recv(sock, server_reply, 2000, 0) < 0)
-        {
-            puts("recv failed");
-            break;
-        } else {
-            printf("sr: %s \n", server_reply );
-        }
+    // Receive a reply from the server
+    if (recv(sock, server_reply, 2000, 0) < 0)
+    {
+        puts("recv failed");
+    }
+    else
+    {
+        printf("sr: %s \n", server_reply);
+    }
 
-        if (strcmp(server_reply, "CONTINUE")==0)
-        {
-            return m;
-        }
-        else
-        {
-            int best = atoi(server_reply);
-            // printf("best: %d", best);
-            return best;
-        }
-
-        break;
+    // if (strcmp(server_reply, "CONTINUE\0") == 0)
+    if(server_reply[0] == 'C')
+    {
+        printf("server reply: %s\n", server_reply); 
+        close(sock);
+        return m;
+    }
+    else
+    {    
+        close(sock);
+        printf("server reply: %s\n", server_reply); 
+        int best = atoi(server_reply);
+        printf("Best: %d\n", best); 
+        get_best_sample_file(best);
+        return best;
     }
 
     close(sock);
     return -1;
 }
+
+
+void load_counterexample_from_string(char *s, int m)
+{
+    free(g);
+    // printf("M: %d\n", m);
+    // printf("M: %s\n", s);
+
+    g = (int *)malloc(m * m * sizeof(int));
+
+    int i;
+    for (i = 0; i < m * m; i++)
+    {
+        g[i] = s[i] - '0';
+    }
+    // print_counterexample(g, m);
+
+}
+
+int get_best_sample_file(int best)
+{
+    int sock;
+    struct sockaddr_in server;
+    char message[1000], server_reply[500000];
+
+    // Create socket
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == -1)
+    {
+        printf("Could not create socket");
+    }
+    puts("Socket created");
+
+    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_family = AF_INET;
+    server.sin_port = htons(5000);
+
+    // Connect to remote server
+    if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0)
+    {
+        perror("connect failed. Error");
+        return -1;
+    }
+
+    puts("Connected\n");
+
+    // keep communicating with server
+
+    // Send some data
+
+    char clientMessage[100];
+    sprintf(clientMessage, "GetSample %d\0", best);
+    if (send(sock, clientMessage, strlen(clientMessage), 0) < 0)
+    {
+        puts("GetSample Send failed");
+    }
+    else
+    {
+        puts("GetSample send succes");
+    }
+
+    shutdown(sock, 1); // outgoing
+
+    // Receive a reply from the server
+    ssize_t res = recv(sock, server_reply, 500000, 0); 
+    // printf("Server reply %s \n", server_reply); 
+    m = best; 
+    if (res < 0)
+    {
+        puts("GetSample recv failed");
+    }
+    
+    else if(res < best * best) get_best_sample_file(best); 
+    else
+    {
+        // printf("%s\n", server_reply); 
+        load_counterexample_from_string(server_reply, best);
+    }
+
+    close(sock);
+    return -1;
+}
+
 
 void load_counterexample(char *name, int m)
 {
@@ -239,7 +325,7 @@ int main(int argc, char **argv)
         printf("Number of cliques at %d: %d\n", m, c_count);
         if (c_count == 0)
         {
-            print_counterexample(g, m);
+            //print_counterexample(g, m);
             write_counterexample(g, m);
             increment_counter();
         }
@@ -252,14 +338,14 @@ int main(int argc, char **argv)
 
         previous = c_count;
 
-        int m2 = get_best_example();
-        if (m2 > m)
-        {
-            m = m2;
-            previous = INT_MAX;
-            char name[40];
-            sprintf(name, "counterexamples/%d.txt", m);
-            load_counterexample(name, m);
-        }
+        m = get_best_example();
+        // if (m2 > m)
+        // {
+        //     m = m2;
+        //     previous = INT_MAX;
+        //     char name[40];
+        //     sprintf(name, "counterexamples/%d.txt", m);
+        //     load_counterexample(name, m);
+        // }
     }
 }

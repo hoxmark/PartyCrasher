@@ -3,6 +3,9 @@
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.nio.charset.*;
 
 import org.omg.CORBA.PRIVATE_MEMBER;
 
@@ -11,7 +14,7 @@ import java.util.Collections;
 
 public class GreetingServer extends Thread {
     private ServerSocket serverSocket;
-    
+
     private String R_CONTINE = "CONTINUE";
 
     public GreetingServer(int port) throws IOException {
@@ -34,6 +37,13 @@ public class GreetingServer extends Thread {
                 case "ClientHello":
                     clientHello(client, line.split("\\s+")[1]);
                     break;
+                case "GetSample":
+                    try {
+                        sendBestSampleToClient(client);
+                    } catch (Exception e) {
+                        System.out.println("sendBestSampleToClient error");
+                    }
+                    break;
                 default:
                     System.out.println("Error: Default in switch");
                     System.out.println(line.split("\\s+")[0]);
@@ -51,16 +61,33 @@ public class GreetingServer extends Thread {
         }
     }
 
-    void clientHello(Socket client, String clientBest) throws IOException{
+    String fileToString(String value) throws Exception {
+        String filename = ("../../counterexamples/" + value + ".txt");
+        return readFile(filename, StandardCharsets.UTF_8);
+    }
+
+    void sendBestSampleToClient(Socket client) throws Exception {
+        PrintStream out = new PrintStream(client.getOutputStream(), true);
+        String file = fileToString(findBestCounterExample());
+        //System.out.println(file.substring(file.indexOf('\n')+1).replace(" ", "").replace("\n", "")); 
+        out.print(file.substring(file.indexOf('\n')+1).replace(" ", "").replace("\n", "")); 
+    }
+
+    static String readFile(String path, Charset encoding) throws IOException {
+        byte[] encoded = Files.readAllBytes(Paths.get(path));
+        return new String(encoded, encoding);
+    }
+
+    void clientHello(Socket client, String clientBest) throws IOException {
         int clientBestInt = Integer.parseInt(clientBest);
         String serverBestString = findBestCounterExample();
         int serverBestInt = Integer.parseInt(serverBestString);
-        
+
         PrintStream out = new PrintStream(client.getOutputStream(), true);
         if (clientBestInt < serverBestInt) {
             //return best counterexmaple to client
-            System.out.println("serverBestString:"+serverBestString);
-            out.println(serverBestString);            
+            System.out.println("serverBestString:" + serverBestString);
+            out.println(serverBestString);
         } else {
             out.println(R_CONTINE);
         }
