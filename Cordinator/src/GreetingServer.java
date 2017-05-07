@@ -100,7 +100,7 @@ public class GreetingServer extends Thread {
         int serverBestInt = Integer.parseInt(serverBestString);
 
         PrintStream out = new PrintStream(client.getOutputStream(), true);
-        if (clientBestInt < serverBestInt) {
+        if (clientBestInt <= serverBestInt) {
             //return best counterexmaple to client
             System.out.println("serverBestString:" + serverBestString);
             out.println(serverBestString);
