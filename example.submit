@@ -1,0 +1,13 @@
+############
+#
+# 
+# Out first submit
+#
+############
+
+Universe       = vanilla
+Executable     = client.o  
+Log = client.log
+Output  = client.out                
+                                                  
+Queue 1
