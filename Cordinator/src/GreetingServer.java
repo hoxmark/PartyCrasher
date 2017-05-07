@@ -6,6 +6,7 @@ import java.util.List;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.charset.*;
+import java.lang.Process.*;
 
 import org.omg.CORBA.PRIVATE_MEMBER;
 
@@ -58,7 +59,8 @@ public class GreetingServer extends Thread {
                         if(i % m == 0 && i != 0) writer.write("\n");
                         writer.write(s.charAt(i) + " "); 
                     }
-                    writer.flush();
+                    writer.flush();                    
+                    // Process p = Runtime.getRuntime().exec("/usr/bin/python /home/bhoxmark/PartyCrasher/watcher.py");
                     break;
 
                 default:
