@@ -15,12 +15,10 @@ import java.util.Collections;
 
 public class GreetingServer extends Thread {
     private ServerSocket serverSocket;
-
     private String R_CONTINE = "CONTINUE";
 
     public GreetingServer(int port) throws IOException {
         serverSocket = new ServerSocket(port);
-        // serverSocket.setSoTimeout(10000);
     }
 
     public void run() {
@@ -37,6 +35,7 @@ public class GreetingServer extends Thread {
                 
                 switch (lines[0]) {
                 case "ClientHello":
+                    //ClientHello alg bredde, clic, state  
                     clientHello(client, lines[1], lines[2], lines[3]);                    
                     break;
                 case "GetSample":
@@ -47,7 +46,7 @@ public class GreetingServer extends Thread {
                     }
                     break;
                 case "PostExample": 
-                    //Postexmaples alg bredde, clic, state  
+                    //PostExample alg bredde, clic, state  
                     postExample(client, lines[1], lines[2], lines[3], lines[4]);                    
                     break;
 
@@ -125,7 +124,7 @@ public class GreetingServer extends Thread {
         int m = Integer.parseInt(width); 
         int cliqueCount = Integer.parseInt(clientClique); 
         
-        // System.out.println("PostExample " + m);
+        System.out.println("Client: "+client.getInetAddress()+" \t alg: "+alg+" \tproblem: "+ width + " \tBest Clique: "+clientClique);        
 
         if(cliqueCount==0){
             System.out.print("########Clique count at 0, saving. ########");
@@ -138,8 +137,12 @@ public class GreetingServer extends Thread {
                 if(i % m == 0 && i != 0) writer.write("\n");
                 writer.write(s.charAt(i) + " "); 
             }
-            writer.flush();                    
-            // Process p = Runtime.getRuntime().exec("/usr/bin/python /home/bhoxmark/PartyCrasher/watcher.py");
+            writer.flush();                            
+            try{
+                Runtime.getRuntime().exec("/usr/bin/python /home/bhoxmark/PartyCrasher/watcher.py");
+            } catch (Exception e){
+                System.out.print("Error: Something went wrong with sending out email");
+            }
         } else if (cliqueCount<10) {
             System.out.print("Clique count under 10, saving. ");
             File file = new File("../../cliqueexamples/"+width+"/" + clientClique + ".txt");
@@ -153,7 +156,6 @@ public class GreetingServer extends Thread {
             }
             writer.flush(); 
         }
-
     }
 
     String findBestCounterExample() {
