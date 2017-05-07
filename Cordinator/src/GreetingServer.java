@@ -34,10 +34,11 @@ public class GreetingServer extends Thread {
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 String line = in.readLine();
                 // System.out.println("here it is: " + line); 
-
-                switch (line.split("\\s+")[0]) {
+                String[] lines = line.split("\\s+")[0];
+                
+                switch (lines[0]) {
                 case "ClientHello":
-                    clientHello(client, line.split("\\s+")[1]);
+                    clientHello(client, lines[1], lines[2]);                    
                     break;
                 case "GetSample":
                     try {
@@ -96,11 +97,13 @@ public class GreetingServer extends Thread {
         return new String(encoded, encoding);
     }
 
-    void clientHello(Socket client, String clientBest) throws IOException {
+    void clientHello(Socket client, String clientBest, String clientBestClique) throws IOException {
         int clientBestInt = Integer.parseInt(clientBest);
         String serverBestString = findBestCounterExample();
         int serverBestInt = Integer.parseInt(serverBestString);
-
+        int clientBestCliqueCount = Integer.parseInt(clientBestClique);
+        System.out.println("Client: "+client.getInetAddress()+" \tproblem: "+ clientBest + " \tBest Clique: "+clientBestClique);
+        
         PrintStream out = new PrintStream(client.getOutputStream(), true);
         if (clientBestInt <= serverBestInt) {
             //return best counterexmaple to client
@@ -109,6 +112,7 @@ public class GreetingServer extends Thread {
         } else {
             out.println(R_CONTINE);
         }
+        
     }
 
     String findBestCounterExample() {
