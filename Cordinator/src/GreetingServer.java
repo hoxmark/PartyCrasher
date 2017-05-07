@@ -38,7 +38,7 @@ public class GreetingServer extends Thread {
                 
                 switch (lines[0]) {
                 case "ClientHello":
-                    clientHello(client, lines[1], lines[2]);                    
+                    clientHello(client, lines[1], lines[2], lines[3]);                    
                     break;
                 case "GetSample":
                     try {
@@ -97,20 +97,38 @@ public class GreetingServer extends Thread {
         return new String(encoded, encoding);
     }
 
-    void clientHello(Socket client, String clientBest, String clientBestClique) throws IOException {
+    void clientHello(Socket client, String alg, String clientBest, String clientBestClique) throws IOException {
         int clientBestInt = Integer.parseInt(clientBest);
         String serverBestString = findBestCounterExample();
         int serverBestInt = Integer.parseInt(serverBestString);
         int clientBestCliqueCount = Integer.parseInt(clientBestClique);
-        System.out.println("Client: "+client.getInetAddress()+" \tproblem: "+ clientBest + " \tBest Clique: "+clientBestClique);
-        
+        System.out.println("Client: "+client.getInetAddress()+" \t alg: "+alg+" \tproblem: "+ clientBest + " \tBest Clique: "+clientBestClique);
+
         PrintStream out = new PrintStream(client.getOutputStream(), true);
-        if (clientBestInt <= serverBestInt) {
-            //return best counterexmaple to client
-            System.out.println("serverBestString:" + serverBestString);
-            out.println(serverBestString);
-        } else {
-            out.println(R_CONTINE);
+        switch(alg){
+            case "RandomFlip":{
+                if (clientBestInt <= serverBestInt) {
+                    //return best counterexmaple to client
+                    System.out.println("serverBestString:" + serverBestString);
+                    out.println(serverBestString);
+                } else {
+                    out.println(R_CONTINE);
+                }
+                break;
+            }
+            case "BruteForce":{
+                if (clientBestInt <= serverBestInt) {
+                    //return best counterexmaple to client
+                    System.out.println("serverBestString:" + serverBestString);
+                    out.println(serverBestString);
+                } else {
+                    out.println(R_CONTINE);
+                }
+                break;
+            }
+            default: {
+                System.out.print("Error: default in switch statement clientHello");                
+            }
         }
         
     }
