@@ -92,7 +92,7 @@ public class GreetingServer extends Thread {
         PrintStream out = new PrintStream(client.getOutputStream(), true);
         switch(alg){
             case "RandomFlip":{
-                if (clientBestInt <= serverBestInt) {
+                if (clientBestInt < serverBestInt) {
                     //return best counterexmaple to client
                     System.out.println("serverBestString:" + serverBestString);
                     out.println(serverBestString);
@@ -102,7 +102,7 @@ public class GreetingServer extends Thread {
                 break;
             }
             case "BruteForce":{
-                if (clientBestInt <= serverBestInt) {
+                if (clientBestInt < serverBestInt) {
                     //return best counterexmaple to client
                     System.out.println("serverBestString:" + serverBestString);
                     out.println(serverBestString);
@@ -112,14 +112,12 @@ public class GreetingServer extends Thread {
                 break;
             }
             default: {
-                System.out.print("Error: default in switch statement clientHello");                
+                System.out.println("Error: default in switch statement clientHello");                
             }
         }
-        
+       
     }
 
-
-    //Postexmaples alg bredde clic 
     void postExample(Socket client, String alg, String width, String clientClique, String s) throws IOException {
         int m = Integer.parseInt(width); 
         int cliqueCount = Integer.parseInt(clientClique); 
@@ -127,7 +125,7 @@ public class GreetingServer extends Thread {
         System.out.println("Client: "+client.getInetAddress()+" \t alg: "+alg+" \tproblem: "+ width + " \tBest Clique: "+clientClique);        
 
         if(cliqueCount==0){
-            System.out.print("########Clique count at 0, saving. ########");
+            System.out.println("########Clique count at 0, saving. ########");
             
             File file = new File("../../counterexamples/" + m + ".txt");
             BufferedWriter writer = new BufferedWriter(new FileWriter(file)); 
@@ -141,10 +139,10 @@ public class GreetingServer extends Thread {
             try{
                 Runtime.getRuntime().exec("/usr/bin/python /home/bhoxmark/PartyCrasher/watcher.py");
             } catch (Exception e){
-                System.out.print("Error: Something went wrong with sending out email");
+                System.out.println("Error: Something went wrong with sending out email");
             }
         } else if (cliqueCount<10) {
-            System.out.print("Clique count under 10, saving. ");
+            System.out.println("Clique count under 10, saving. ");
             File file = new File("../../cliqueexamples/"+width+"/" + clientClique + ".txt");
             file.getParentFile().mkdirs();
             BufferedWriter writer = new BufferedWriter(new FileWriter(file)); 
