@@ -32,6 +32,7 @@ public class GreetingServer extends Thread {
 
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 String line = in.readLine();
+                // System.out.println("here it is: " + line); 
 
                 switch (line.split("\\s+")[0]) {
                 case "ClientHello":
@@ -44,9 +45,24 @@ public class GreetingServer extends Thread {
                         System.out.println("sendBestSampleToClient error");
                     }
                     break;
+                case "P": 
+                    String s = line.split("\\s+")[1]; 
+                    int m = (int)Math.sqrt(s.length()); 
+
+                    System.out.println("PostExample " + m);
+                    File file = new File("../../counterexamples/" + m + ".txt");
+                    BufferedWriter writer = new BufferedWriter(new FileWriter(file)); 
+                    writer.write(m + " 0 \n"); 
+
+                    for(int i = 0; i < m * m; i++){
+                        if(i % m == 0 && i != 0) writer.write("\n");
+                        writer.write(s.charAt(i) + " "); 
+                    }
+                    writer.flush();
+                    break;
+
                 default:
                     System.out.println("Error: Default in switch");
-                    System.out.println(line.split("\\s+")[0]);
                 }
 
                 client.close();
@@ -69,8 +85,8 @@ public class GreetingServer extends Thread {
     void sendBestSampleToClient(Socket client) throws Exception {
         PrintStream out = new PrintStream(client.getOutputStream(), true);
         String file = fileToString(findBestCounterExample());
-        //System.out.println(file.substring(file.indexOf('\n')+1).replace(" ", "").replace("\n", "")); 
-        out.print(file.substring(file.indexOf('\n')+1).replace(" ", "").replace("\n", "")); 
+        //System.out.println(file.substring(file.indexOf('\n')+1).replace(" ", "").replace("\n", ""));
+        out.print(file.substring(file.indexOf('\n') + 1).replace(" ", "").replace("\n", ""));
     }
 
     static String readFile(String path, Charset encoding) throws IOException {
@@ -106,7 +122,7 @@ public class GreetingServer extends Thread {
                 }
             }
         }
-        return Collections.max(counterexamples).toString();
+        return counterexamples.isEmpty() ? "0" : Collections.max(counterexamples).toString();
     }
 
     public static void main(String[] args) {
