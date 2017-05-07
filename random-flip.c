@@ -13,9 +13,9 @@
 #include <stdio.h> //printf
 #include <stdlib.h>
 #include <string.h>
-#include <string.h> //strlen
-#include <sys/socket.h>
+#include <string.h>     //strlen
 #include <sys/socket.h> //socket
+#include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <unistd.h> //usleep
@@ -35,11 +35,17 @@
 int random_int(int min, int max);
 void load_counterexample(char* name, int m);
 void print_counterexample(int* g, int m);
+int get_best_example(char* alg_name);
+int get_best_sample_file(int best);
 int build_socket();
+void increment_counter();
+void send_counterexample(char* alg_name, int* g, int m);
+bool send_all(int socket, char* alg_name, int* buffer, size_t length);
+
 int random_int(int min, int max) { return min + rand() % (max - min); }
 
 int* g;
-int m;
+int m, clique_count;
 
 void print_counterexample(int* g, int m) {
     int i, j;
@@ -82,10 +88,6 @@ int recv_timeout(int s, int timeout) {
     char chunk[CHUNK_SIZE];
     double timediff;
 
-    // make socket non blocking
-    // fcntl(s, F_SETFL, O_NONBLOCK);
-
-    // beginning time
     gettimeofday(&begin, NULL);
     int count = 0;
 
@@ -119,12 +121,12 @@ int recv_timeout(int s, int timeout) {
     return total_size;
 }
 
-int get_best_example() {
+int get_best_example(char* alg_name) {
     int sock = build_socket();
-    struct sockaddr_in server;
     char clientMessage[100], server_reply[2000];
 
-    sprintf(clientMessage, "ClientHello %d\0", m);
+    sprintf(clientMessage, "ClientHello %s %d %d", alg_name, m, clique_count);
+    printf("Sending message: %s \n", clientMessage);
     if (send(sock, clientMessage, strlen(clientMessage), 0) < 0) {
         // puts("Send failed");
     } else {
@@ -151,7 +153,10 @@ int get_best_example() {
         // printf("server reply: %s\n", server_reply);
 
         m = atoi(server_reply);
+        printf("The best at server is %d. \n", m);
         get_best_sample_file(m);
+        increment_counter();
+        printf("Now working on %d \n", m);
         return m;
     }
     return -1;
@@ -196,12 +201,11 @@ int build_socket() {
 
 int get_best_sample_file(int best) {
     int sock = build_socket();
-    char message[1000], server_reply[500000];
+    char clientMessage[100], server_reply[500000];
 
     // Send some data
-
-    char clientMessage[100];
-    sprintf(clientMessage, "GetSample %d\0", best);
+    sprintf(clientMessage, "GetSample %d", best);
+    printf("%s \n", clientMessage);
     if (send(sock, clientMessage, strlen(clientMessage), 0) < 0) {
         puts("GetSample Send failed");
     } else {
@@ -255,22 +259,36 @@ void increment_counter() {
     g = g2;
 }
 
-bool send_all(int socket, int* buffer, size_t length) {
-    char test[m * m + 2];
-    test[0] = 'P';
-    test[1] = ' ';
+bool send_all(int socket, char* alg_name, int* buffer, size_t length) {
+    char message_head[40];
+    sprintf(message_head, "PostExample %s %d %d ", alg_name, m, clique_count);
+    // printf("Message head: %s \n", message_head);
+
+    char message_body[length];
     int i;
-    for(i = 2; i < m * m + 2; i++){
-        sprintf(&test[i], "%d", buffer[i]);
+    for (i = 0; i < length; i++) {
+        sprintf(&message_body[i], "%d", buffer[i]);
     }
-    send(socket, test, strlen(test), 0);
+
+    char total_message[strlen(message_head) + length];
+
+    for(i = 0; i < strlen(message_head); i++){
+        total_message[i] = message_head[i];
+    }
+
+    for(i = strlen(message_head); i < length + strlen(message_head); i++){
+        total_message[i] = message_body[i-strlen(message_head)];
+    }
+
+    printf("SENDING EXAMPLE: %s\n", message_head);
+    send(socket, total_message, strlen(total_message), 0);
 
     return true;
 }
 
-void send_counterexample(int* g, int m) {
+void send_counterexample(char* alg_name, int* g, int m) {
     int sock = build_socket();
-    send_all(sock, g, m * m);
+    send_all(sock, alg_name, g, m * m);
     close(sock);
 }
 
@@ -279,6 +297,47 @@ void flip_entry(int* matrix, int row, int column, int m) {
         matrix[row * m + column] = 1;
     else
         matrix[row * m + column] = 0;
+}
+
+void random_flip() {
+    char* alg_name = "RandomFlip";
+
+    clique_count = INT_MAX;
+    int previous = INT_MAX;
+    double timediff;
+    struct timeval begin, now;
+    gettimeofday(&begin, NULL);
+
+    m = get_best_example(alg_name);
+    while (1) {
+        int row = random_int(0, m);
+        int column = random_int(row, m);
+
+        flip_entry(g, row, column, m);
+        clique_count = CliqueCount(g, m);
+        printf("Number of cliques at %d: %d\n", m, clique_count);
+        if (clique_count == 0) {
+            send_counterexample(alg_name, g, m);
+            // write_counterexample(g, m);
+            increment_counter();
+            clique_count = INT_MAX;
+        }
+
+        // Flip back if worse
+        if (clique_count > previous) {
+            flip_entry(g, row, column, m);
+        }
+        previous = clique_count;
+        gettimeofday(&now, NULL);
+
+        timediff =
+            (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
+        if (timediff > 20) {
+            gettimeofday(&begin, NULL);
+            if(clique_count < 10) send_counterexample(alg_name, g, m);
+            m = get_best_example(alg_name);
+        }
+    }
 }
 
 int main(int argc, char** argv) {
@@ -296,44 +355,9 @@ int main(int argc, char** argv) {
         for (i = 0; i < m * m; i++) {
             fscanf(file, "%d", &g[i]);
         }
-
+        m = 20;
         fclose(file);
     }
 
-    else
-        m = get_best_example();
-
-    int c_count = INT_MAX;
-    int previous = INT_MAX;
-    double timediff;
-
-    struct timeval begin, now;
-    gettimeofday(&begin, NULL);
-    while (1) {
-        int row = random_int(0, m);
-        int column = random_int(row, m);
-
-        flip_entry(g, row, column, m);
-        c_count = CliqueCount(g, m);
-        // printf("Number of cliques at %d: %d\n", m, c_count);
-        if (c_count == 0) {
-            send_counterexample(g, m);
-            // write_counterexample(g, m);
-            increment_counter();
-        }
-
-        // Flip back if worse
-        if (c_count > previous) {
-            flip_entry(g, row, column, m);
-        }
-        previous = c_count;
-        gettimeofday(&now, NULL);
-
-        timediff =
-            (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
-        if (timediff > 20){
-            gettimeofday(&begin, NULL);
-            m = get_best_example();
-        }
-    }
+    random_flip();
 }
