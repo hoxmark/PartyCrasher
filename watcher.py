@@ -18,7 +18,7 @@ DIR = '/home/bhoxmark/PartyCrasher/counterexamples'
 numberOfFiles = len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
 
 
-file = open("count.txt", "r")
+file = open("/home/bhoxmark/PartyCrasher/count.txt", "r")
 oldCount = file.read()
 
 print(numberOfFiles)
