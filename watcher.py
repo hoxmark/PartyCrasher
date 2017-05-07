@@ -4,17 +4,15 @@ import smtplib
 # simple version for working with CWD
 # print len([name for name in os.listdir('.') if os.path.isfile(name)])
 
-
-
 fromaddr = 'partycrasherucsb@gmail.com'
-toaddrs  = 'partycrasherucsb@gmail.com'
+toaddrs  = 'hoxmark@me.com'
 username = 'partycrasherucsb@gmail.com'
 password = 'ucsb1234'
 
 
 # path joining version for other paths
-# DIR = '/home/bhoxmark/PartyCrasher/counterexamples'
-DIR = '/Users/hoxmark/Developer/Fag/Cloud/PartyCrasher/counterexamples'
+DIR = '/home/bhoxmark/PartyCrasher/counterexamples'
+# DIR = '/Users/hoxmark/Developer/Fag/Cloud/PartyCrasher/counterexamples'
 
 numberOfFiles = len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
 
