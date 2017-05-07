@@ -180,7 +180,7 @@ int build_socket() {
     }
     // puts("Socket created");
 
-    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_addr.s_addr = inet_addr("104.198.30.238");
     server.sin_family = AF_INET;
     server.sin_port = htons(5000);
 
