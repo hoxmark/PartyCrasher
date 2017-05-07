@@ -34,7 +34,7 @@ public class GreetingServer extends Thread {
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 String line = in.readLine();
                 // System.out.println("here it is: " + line); 
-                String[] lines = line.split("\\s+")[0];
+                String[] lines = line.split("\\s+");
                 
                 switch (lines[0]) {
                 case "ClientHello":
@@ -48,7 +48,7 @@ public class GreetingServer extends Thread {
                     }
                     break;
                 case "P": 
-                    String s = line.split("\\s+")[1]; 
+                    String s = lines[1]; 
                     int m = (int)Math.sqrt(s.length()); 
 
                     System.out.println("PostExample " + m);
