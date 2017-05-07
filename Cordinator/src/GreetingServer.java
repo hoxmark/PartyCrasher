@@ -121,19 +121,39 @@ public class GreetingServer extends Thread {
 
 
     //Postexmaples alg bredde clic 
-    void postExample(Socket client, String alg, String width, String clientBestClique, String s) throws IOException {
-        int m = (int)Math.sqrt(s.length()); 
-        System.out.println("PostExample " + m);
-        File file = new File("../../counterexamples/" + m + ".txt");
-        BufferedWriter writer = new BufferedWriter(new FileWriter(file)); 
-        writer.write(m + " 0 \n"); 
+    void postExample(Socket client, String alg, String width, String clientClique, String s) throws IOException {
+        int m = Integer.parseInt(width); 
+        int cliqueCount = Integer.parseInt(clientClique); 
+        
+        // System.out.println("PostExample " + m);
 
-        for(int i = 0; i < m * m; i++){
-            if(i % m == 0 && i != 0) writer.write("\n");
-            writer.write(s.charAt(i) + " "); 
+        if(cliqueCount==0){
+            System.out.print("########Clique count at 0, saving. ########");
+            
+            File file = new File("../../counterexamples/" + m + ".txt");
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file)); 
+            writer.write(m + " 0 \n"); 
+
+            for(int i = 0; i < m * m; i++){
+                if(i % m == 0 && i != 0) writer.write("\n");
+                writer.write(s.charAt(i) + " "); 
+            }
+            writer.flush();                    
+            // Process p = Runtime.getRuntime().exec("/usr/bin/python /home/bhoxmark/PartyCrasher/watcher.py");
+        } else if (cliqueCount<10) {
+            System.out.print("Clique count under 10, saving. ");
+            File file = new File("../../cliqueexamples/"+width+"/" + clientClique + ".txt");
+            file.getParentFile().mkdirs();
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file)); 
+            writer.write(m + " 0 \n"); 
+
+            for(int i = 0; i < m * m; i++){
+                if(i % m == 0 && i != 0) writer.write("\n");
+                writer.write(s.charAt(i) + " "); 
+            }
+            writer.flush(); 
         }
-        writer.flush();                    
-        // Process p = Runtime.getRuntime().exec("/usr/bin/python /home/bhoxmark/PartyCrasher/watcher.py");
+
     }
 
     String findBestCounterExample() {
