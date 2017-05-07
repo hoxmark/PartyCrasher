@@ -33,7 +33,6 @@ public class GreetingServer extends Thread {
 
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 String line = in.readLine();
-                // System.out.println("here it is: " + line); 
                 String[] lines = line.split("\\s+");
                 
                 switch (lines[0]) {
@@ -47,27 +46,14 @@ public class GreetingServer extends Thread {
                         System.out.println("sendBestSampleToClient error");
                     }
                     break;
-                case "P": 
-                    String s = lines[1]; 
-                    int m = (int)Math.sqrt(s.length()); 
-
-                    System.out.println("PostExample " + m);
-                    File file = new File("../../counterexamples/" + m + ".txt");
-                    BufferedWriter writer = new BufferedWriter(new FileWriter(file)); 
-                    writer.write(m + " 0 \n"); 
-
-                    for(int i = 0; i < m * m; i++){
-                        if(i % m == 0 && i != 0) writer.write("\n");
-                        writer.write(s.charAt(i) + " "); 
-                    }
-                    writer.flush();                    
-                    // Process p = Runtime.getRuntime().exec("/usr/bin/python /home/bhoxmark/PartyCrasher/watcher.py");
+                case "PostExample": 
+                    //Postexmaples alg bredde, clic, state  
+                    postExample(client, lines[1], lines[2], lines[3], lines[4]);                    
                     break;
 
                 default:
                     System.out.println("Error: Default in switch");
                 }
-
                 client.close();
 
             } catch (SocketTimeoutException s) {
@@ -131,6 +117,23 @@ public class GreetingServer extends Thread {
             }
         }
         
+    }
+
+
+    //Postexmaples alg bredde clic 
+    void postExample(Socket client, String alg, String width, String clientBestClique, String s) throws IOException {
+        int m = (int)Math.sqrt(s.length()); 
+        System.out.println("PostExample " + m);
+        File file = new File("../../counterexamples/" + m + ".txt");
+        BufferedWriter writer = new BufferedWriter(new FileWriter(file)); 
+        writer.write(m + " 0 \n"); 
+
+        for(int i = 0; i < m * m; i++){
+            if(i % m == 0 && i != 0) writer.write("\n");
+            writer.write(s.charAt(i) + " "); 
+        }
+        writer.flush();                    
+        // Process p = Runtime.getRuntime().exec("/usr/bin/python /home/bhoxmark/PartyCrasher/watcher.py");
     }
 
     String findBestCounterExample() {
