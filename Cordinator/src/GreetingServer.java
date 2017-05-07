@@ -15,12 +15,10 @@ import java.util.Collections;
 
 public class GreetingServer extends Thread {
     private ServerSocket serverSocket;
-
     private String R_CONTINE = "CONTINUE";
 
     public GreetingServer(int port) throws IOException {
         serverSocket = new ServerSocket(port);
-        // serverSocket.setSoTimeout(10000);
     }
 
     public void run() {
@@ -33,11 +31,11 @@ public class GreetingServer extends Thread {
 
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 String line = in.readLine();
-                // System.out.println("here it is: " + line); 
                 String[] lines = line.split("\\s+");
                 
                 switch (lines[0]) {
                 case "ClientHello":
+                    //ClientHello alg bredde, clic, state  
                     clientHello(client, lines[1], lines[2], lines[3]);                    
                     break;
                 case "GetSample":
@@ -47,27 +45,14 @@ public class GreetingServer extends Thread {
                         System.out.println("sendBestSampleToClient error");
                     }
                     break;
-                case "P": 
-                    String s = lines[1]; 
-                    int m = (int)Math.sqrt(s.length()); 
-
-                    System.out.println("PostExample " + m);
-                    File file = new File("../../counterexamples/" + m + ".txt");
-                    BufferedWriter writer = new BufferedWriter(new FileWriter(file)); 
-                    writer.write(m + " 0 \n"); 
-
-                    for(int i = 0; i < m * m; i++){
-                        if(i % m == 0 && i != 0) writer.write("\n");
-                        writer.write(s.charAt(i) + " "); 
-                    }
-                    writer.flush();                    
-                    // Process p = Runtime.getRuntime().exec("/usr/bin/python /home/bhoxmark/PartyCrasher/watcher.py");
+                case "PostExample": 
+                    //PostExample alg bredde, clic, state  
+                    postExample(client, lines[1], lines[2], lines[3], lines[4]);                    
                     break;
 
                 default:
                     System.out.println("Error: Default in switch");
                 }
-
                 client.close();
 
             } catch (SocketTimeoutException s) {
@@ -127,10 +112,48 @@ public class GreetingServer extends Thread {
                 break;
             }
             default: {
-                System.out.print("Error: default in switch statement clientHello");                
+                System.out.println("Error: default in switch statement clientHello");                
             }
         }
+       
+    }
+
+    void postExample(Socket client, String alg, String width, String clientClique, String s) throws IOException {
+        int m = Integer.parseInt(width); 
+        int cliqueCount = Integer.parseInt(clientClique); 
         
+        System.out.println("Client: "+client.getInetAddress()+" \t alg: "+alg+" \tproblem: "+ width + " \tBest Clique: "+clientClique);        
+
+        if(cliqueCount==0){
+            System.out.println("########Clique count at 0, saving. ########");
+            
+            File file = new File("../../counterexamples/" + m + ".txt");
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file)); 
+            writer.write(m + " 0 \n"); 
+
+            for(int i = 0; i < m * m; i++){
+                if(i % m == 0 && i != 0) writer.write("\n");
+                writer.write(s.charAt(i) + " "); 
+            }
+            writer.flush();                            
+            try{
+                Runtime.getRuntime().exec("/usr/bin/python /home/bhoxmark/PartyCrasher/watcher.py");
+            } catch (Exception e){
+                System.out.println("Error: Something went wrong with sending out email");
+            }
+        } else if (cliqueCount<10) {
+            System.out.println("Clique count under 10, saving. ");
+            File file = new File("../../cliqueexamples/"+width+"/" + clientClique + ".txt");
+            file.getParentFile().mkdirs();
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file)); 
+            writer.write(m + " 0 \n"); 
+
+            for(int i = 0; i < m * m; i++){
+                if(i % m == 0 && i != 0) writer.write("\n");
+                writer.write(s.charAt(i) + " "); 
+            }
+            writer.flush(); 
+        }
     }
 
     String findBestCounterExample() {
