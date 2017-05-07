@@ -92,7 +92,7 @@ public class GreetingServer extends Thread {
         PrintStream out = new PrintStream(client.getOutputStream(), true);
         switch(alg){
             case "RandomFlip":{
-                if (clientBestInt < serverBestInt) {
+                if (clientBestInt <= serverBestInt) {
                     //return best counterexmaple to client
                     System.out.println("serverBestString:" + serverBestString);
                     out.println(serverBestString);
@@ -102,7 +102,7 @@ public class GreetingServer extends Thread {
                 break;
             }
             case "BruteForce":{
-                if (clientBestInt < serverBestInt) {
+                if (clientBestInt <= serverBestInt) {
                     //return best counterexmaple to client
                     System.out.println("serverBestString:" + serverBestString);
                     out.println(serverBestString);
