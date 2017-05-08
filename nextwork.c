@@ -281,8 +281,9 @@ int build_socket() {
     server.sin_port = htons(5000);
     // Connect to remote server
     if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
-        perror("connect failed. Error");
-        return -1;
+        perror("Connection failed. Retrying in 20 seconds");
+        sleep(20);
+        return build_socket();
     }
 
     // puts("Connected\n");
@@ -467,7 +468,7 @@ void best_clique() {
 
         timediff =
             (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
-        if (timediff > 10) {
+        if (timediff > 100) {
             gettimeofday(&begin, NULL);
             send_counterexample(alg_name, g, m);
             // m = get_best_example(alg_name);
