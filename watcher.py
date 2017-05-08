@@ -27,7 +27,7 @@ msg = 'NY verdi funnet'+str(numberOfFiles)
 
 
 if (int(oldCount) < int(numberOfFiles)):
-    with open('count.txt', 'w') as file:
+    with open('/home/bhoxmark/PartyCrasher/count.txt', 'w') as file:
         print("Printing")
         file.write(str(numberOfFiles))
         server = smtplib.SMTP('smtp.gmail.com:587')

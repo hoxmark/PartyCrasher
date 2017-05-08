@@ -36,7 +36,7 @@ int random_int(int min, int max);
 void load_counterexample(char* name, int m);
 void print_counterexample(int* g, int m);
 int get_best_example(char* alg_name);
-int get_best_sample_file(int best);
+int get_best_sample_file(char* alg_name, int best);
 int build_socket();
 void increment_counter();
 void send_counterexample(char* alg_name, int* g, int m);
@@ -115,10 +115,59 @@ int recv_timeout(int s, int timeout) {
             for (j = 0; j < size_recv; j++) {
                 g[count] = chunk[j] - '0';
                 count++;
+                if (count > m * m)
+                    break;
+                // printf("\n%s\n", chunk);
             }
         }
     }
+    // print_counterexample(g, m);
     return total_size;
+}
+
+void get_next_work(char *alg_name) {
+    int sock = build_socket();
+    char clientMessage[100], server_reply[600000], buf[512];
+
+    sprintf(clientMessage, "GetNextWork %s %d %d", alg_name, m, clique_count);
+
+    printf("Sending message: %s \n", clientMessage);
+    if (send(sock, clientMessage, strlen(clientMessage), 0) < 0) {
+        // puts("Send failed");
+    } else {
+        // puts("send succes");
+    }
+
+    shutdown(sock, 1); // outgoing
+
+    // Receive a reply from the server
+    size_t count = 0, i = 0;
+    size_t res = recv(sock, buf, 512, 0);
+    while(res != 0 && count < 600000){
+        for(i = 0; i < res ; i++){
+            server_reply[count] = buf[i];
+            count++;
+        }
+        res = recv(sock, buf, 512, 0);
+    }
+    shutdown(sock, 2); // outgoing
+    close(sock);
+    printf("Server reply: %c\n", server_reply[0]); 
+    if(server_reply[0] != 'C'){
+        m = 0;
+        char m_string[600000];
+        sscanf(server_reply, "%d %s", &m, m_string);
+
+        printf("We got a new work item. At %d \n", m);
+
+        free(g);
+        g = (int *) malloc(m * m * sizeof(int));
+
+        for(i = 0; i < m * m; i++){
+            g[i] = m_string[i] - '0';
+        }
+        // print_counterexample(g, m);
+    }
 }
 
 int get_best_example(char* alg_name) {
@@ -154,12 +203,54 @@ int get_best_example(char* alg_name) {
 
         m = atoi(server_reply);
         printf("The best at server is %d. \n", m);
-        get_best_sample_file(m);
+
+        // If server has the better example - get it and start working on next
+
+        get_best_sample_file(alg_name, m);
         increment_counter();
+        // }
+
+        // If not, get the current best and improve it
         printf("Now working on %d \n", m);
+        // print_counterexample(g, m);
         return m;
     }
     return -1;
+}
+
+void get_best_clique_count(char* alg_name) {
+    int sock = build_socket();
+    char clientMessage[100], server_reply[2000];
+
+    sprintf(clientMessage, "GetCliqueCount %s %d %d", alg_name, m,
+            clique_count);
+    printf("Sending message: %s \n", clientMessage);
+    if (send(sock, clientMessage, strlen(clientMessage), 0) < 0) {
+        // puts("Send failed");
+    } else {
+        // puts("send succes");
+    }
+
+    shutdown(sock, 1); // outgoing
+
+    // Receive a reply from the server
+    if (recv(sock, server_reply, 2000, 0) < 0) {
+        // puts("recv failed");
+    } else {
+        // Error. TODO
+        // printf("sr: %s \n", server_reply);
+    }
+
+    if (server_reply[0] == 'C') {
+        // printf("server reply: %s\n", server_reply);
+        close(sock);
+    } else {
+
+        free(g);
+        g = (int*)malloc(m * m * sizeof(int));
+        recv_timeout(sock, 5);
+        close(sock);
+    }
 }
 
 void load_counterexample_from_string(char* s, int m) {
@@ -185,7 +276,8 @@ int build_socket() {
     }
     // puts("Socket created");
 
-    server.sin_addr.s_addr = inet_addr("104.198.30.238");
+    server.sin_addr.s_addr = inet_addr("10.20.1.147");
+    // server.sin_addr.s_addr = inet_addr("127.0.0.1");
     server.sin_family = AF_INET;
     server.sin_port = htons(5000);
 
@@ -199,12 +291,12 @@ int build_socket() {
     return sock;
 }
 
-int get_best_sample_file(int best) {
+int get_best_sample_file(char* alg_name, int best) {
     int sock = build_socket();
-    char clientMessage[100], server_reply[500000];
+    char clientMessage[100];
 
     // Send some data
-    sprintf(clientMessage, "GetSample %d", best);
+    sprintf(clientMessage, "GetSample %s %d %d", alg_name, best, clique_count);
     printf("%s \n", clientMessage);
     if (send(sock, clientMessage, strlen(clientMessage), 0) < 0) {
         puts("GetSample Send failed");
@@ -215,9 +307,11 @@ int get_best_sample_file(int best) {
     shutdown(sock, 1); // outgoing
 
     // Receive a reply from the server
+
+    printf("Best is %d \n", best);
     free(g);
     g = (int*)malloc(best * best * sizeof(int));
-    recv_timeout(sock, 4);
+    recv_timeout(sock, 5);
     close(sock);
     return -1;
 }
@@ -272,12 +366,12 @@ bool send_all(int socket, char* alg_name, int* buffer, size_t length) {
 
     char total_message[strlen(message_head) + length];
 
-    for(i = 0; i < strlen(message_head); i++){
+    for (i = 0; i < strlen(message_head); i++) {
         total_message[i] = message_head[i];
     }
 
-    for(i = strlen(message_head); i < length + strlen(message_head); i++){
-        total_message[i] = message_body[i-strlen(message_head)];
+    for (i = strlen(message_head); i < length + strlen(message_head); i++) {
+        total_message[i] = message_body[i - strlen(message_head)];
     }
 
     printf("SENDING EXAMPLE: %s\n", message_head);
@@ -310,6 +404,7 @@ void random_flip() {
 
     m = get_best_example(alg_name);
     while (1) {
+        get_next_work(alg_name);
         int row = random_int(0, m);
         int column = random_int(row, m);
 
@@ -334,8 +429,54 @@ void random_flip() {
             (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
         if (timediff > 20) {
             gettimeofday(&begin, NULL);
-            if(clique_count < 10) send_counterexample(alg_name, g, m);
+            if (clique_count < 10)
+                send_counterexample(alg_name, g, m);
             m = get_best_example(alg_name);
+        }
+    }
+}
+
+void best_clique() {
+    char* alg_name = "BestClique";
+
+    clique_count = INT_MAX;
+    int previous = INT_MAX;
+    double timediff;
+    struct timeval begin, now;
+    gettimeofday(&begin, NULL);
+
+    // m = get_best_example(alg_name);
+    get_next_work(alg_name);
+    while (1) {
+        int row = random_int(0, m);
+        int column = random_int(row, m);
+
+        flip_entry(g, row, column, m);
+        clique_count = CliqueCount(g, m);
+        printf("Number of cliques at %d: %d\n", m, clique_count);
+        if (clique_count == 0) {
+            send_counterexample(alg_name, g, m);
+            sleep(5);
+            // write_counterexample(g, m);
+            // increment_counter();
+            get_next_work(alg_name);
+            clique_count = INT_MAX;
+        }
+
+        // Flip back if worse
+        if (clique_count > previous) {
+            flip_entry(g, row, column, m);
+        }
+        previous = clique_count;
+        gettimeofday(&now, NULL);
+
+        timediff =
+            (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
+        if (timediff > 10) {
+            gettimeofday(&begin, NULL);
+            send_counterexample(alg_name, g, m);
+            // m = get_best_example(alg_name);
+            get_next_work(alg_name);
         }
     }
 }
@@ -358,6 +499,6 @@ int main(int argc, char** argv) {
         m = 20;
         fclose(file);
     }
-
-    random_flip();
+    // random_flip();
+    best_clique();
 }
