@@ -281,8 +281,9 @@ int build_socket() {
     server.sin_port = htons(5000);
     // Connect to remote server
     if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
-        perror("connect failed. Error");
-        return -1;
+        perror("Connection failed. Retrying in 20 seconds");
+        sleep(20);
+        return build_socket();
     }
 
     // puts("Connected\n");
