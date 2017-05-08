@@ -25,7 +25,7 @@ print(numberOfFiles)
 print(oldCount)
 valu = int(numberOfFiles)+72
 msg = 'New value found: '+str(valu)
-
+print(msg)
 
 if (int(oldCount) < int(numberOfFiles)):
     with open('/home/bhoxmark/PartyCrasher/count.txt', 'w') as file:
