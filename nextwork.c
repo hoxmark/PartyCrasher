@@ -131,7 +131,7 @@ void get_next_work(char *alg_name) {
 
     sprintf(clientMessage, "GetNextWork %s %d %d", alg_name, m, clique_count);
 
-    printf("Sending message: %s \n", clientMessage);
+    printf("%s \n", clientMessage);
     if (send(sock, clientMessage, strlen(clientMessage), 0) < 0) {
         // puts("Send failed");
     } else {
@@ -373,7 +373,7 @@ bool send_all(int socket, char* alg_name, int* buffer, size_t length) {
         total_message[i] = message_body[i - strlen(message_head)];
     }
 
-    printf("SENDING EXAMPLE: %s\n", message_head);
+    printf("%s\n", message_head);
     send(socket, total_message, strlen(total_message), 0);
 
     return true;
@@ -462,8 +462,9 @@ void best_clique() {
         // Flip back if worse
         if (clique_count > previous) {
             flip_entry(g, row, column, m);
+            clique_count = previous;
         }
-        previous = clique_count;
+        
         gettimeofday(&now, NULL);
 
         timediff =
@@ -474,6 +475,7 @@ void best_clique() {
             // m = get_best_example(alg_name);
             get_next_work(alg_name);
         }
+        previous = clique_count;
     }
 }
 
