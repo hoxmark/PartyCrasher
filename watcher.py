@@ -23,7 +23,7 @@ oldCount = file.read()
 
 print(numberOfFiles)
 print(oldCount)
-msg = 'NY verdi funnet'+str(numberOfFiles)
+msg = 'New value found: '+str(numberOfFiles+72)
 
 
 if (int(oldCount) < int(numberOfFiles)):
