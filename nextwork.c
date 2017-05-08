@@ -152,7 +152,7 @@ void get_next_work(char *alg_name) {
     }
     shutdown(sock, 2); // outgoing
     close(sock);
-    printf("Server reply: %c\n", server_reply[0]); 
+    printf("Server reply: %c\n", server_reply[0]);
     if(server_reply[0] != 'C'){
         m = 0;
         char m_string[600000];
@@ -276,11 +276,9 @@ int build_socket() {
     }
     // puts("Socket created");
 
-    server.sin_addr.s_addr = inet_addr("10.20.1.147");
-    // server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_addr.s_addr = inet_addr("104.198.30.238");
     server.sin_family = AF_INET;
     server.sin_port = htons(5000);
-
     // Connect to remote server
     if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
         perror("connect failed. Error");
@@ -456,9 +454,6 @@ void best_clique() {
         printf("Number of cliques at %d: %d\n", m, clique_count);
         if (clique_count == 0) {
             send_counterexample(alg_name, g, m);
-            sleep(5);
-            // write_counterexample(g, m);
-            // increment_counter();
             get_next_work(alg_name);
             clique_count = INT_MAX;
         }

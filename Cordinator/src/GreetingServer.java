@@ -24,10 +24,7 @@ public class GreetingServer extends Thread {
         bestClique = new PartyState(0, Integer.MAX_VALUE, "");
 
         try {
-            bestClique.setWidth(Integer.parseInt(findBestCounterExample()));
-            String file = fileToString(findBestCounterExample());
-            bestClique.setBody(file.substring(file.indexOf('\n') + 1).replace(" ", "").replace("\n", ""));
-
+            generateNewWidth();
         } catch (Exception e) {
             System.out.print("nei");
         }
@@ -275,7 +272,7 @@ public class GreetingServer extends Thread {
             System.out.println("Returning " + bestClique.getCliqueCount());
         //State or  
         PrintStream out = new PrintStream(client.getOutputStream(), true);
-        if (cliqueCount < bestClique.getCliqueCount()) {
+        if (m == bestClique.getWidth() && cliqueCount < bestClique.getCliqueCount()) {
             System.out.println("@@@@@@@@@@@@@CONTINUE");
             out.print(R_CONTINE);
         } else {
