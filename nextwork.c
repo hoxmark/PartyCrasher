@@ -468,7 +468,7 @@ void best_clique() {
 
         timediff =
             (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
-        if (timediff > 10) {
+        if (timediff > 100) {
             gettimeofday(&begin, NULL);
             send_counterexample(alg_name, g, m);
             // m = get_best_example(alg_name);
