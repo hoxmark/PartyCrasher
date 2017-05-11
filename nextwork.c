@@ -462,9 +462,9 @@ void best_clique() {
         // Flip back if worse
         if (clique_count > previous) {
             flip_entry(g, row, column, m);
-            clique_count = previous;
+            // clique_count = previous;
         }
-        
+
         gettimeofday(&now, NULL);
 
         timediff =
