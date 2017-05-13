@@ -276,9 +276,9 @@ int build_socket() {
     }
     // puts("Socket created");
 
-    server.sin_addr.s_addr = inet_addr("169.231.130.254");
+    server.sin_addr.s_addr = inet_addr("104.198.30.238");
     server.sin_family = AF_INET;
-    server.sin_port = htons(5000);
+    server.sin_port = htons(5001);
     // Connect to remote server
     if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
         perror("Connection failed. Retrying in 20 seconds");
