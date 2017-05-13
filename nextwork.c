@@ -278,7 +278,7 @@ int build_socket() {
 
     server.sin_addr.s_addr = inet_addr("104.198.30.238");
     server.sin_family = AF_INET;
-    server.sin_port = htons(5000);
+    server.sin_port = htons(5001);
     // Connect to remote server
     if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
         perror("Connection failed. Retrying in 20 seconds");
@@ -478,6 +478,49 @@ void best_clique() {
         previous = clique_count;
     }
 }
+void end_flip() {
+    char* alg_name = "EndFlip";
+
+    clique_count = INT_MAX;
+    int previous = INT_MAX;
+    double timediff;
+    struct timeval begin, now;
+    gettimeofday(&begin, NULL);
+
+    // m = get_best_example(alg_name);
+    get_next_work(alg_name);
+    while (1) {
+        int row = random_int(0, m);
+        int column = m-1;
+
+        flip_entry(g, row, column, m);
+        clique_count = CliqueCount(g, m);
+        printf("Number of cliques at %d: %d\n", m, clique_count);
+        if (clique_count == 0) {
+            send_counterexample(alg_name, g, m);
+            get_next_work(alg_name);
+            clique_count = INT_MAX;
+        }
+
+        // Flip back if worse
+        if (clique_count > previous) {
+            flip_entry(g, row, column, m);
+            // clique_count = previous;
+        }
+
+        gettimeofday(&now, NULL);
+
+        timediff =
+            (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
+        if (timediff > 100) {
+            gettimeofday(&begin, NULL);
+            send_counterexample(alg_name, g, m);
+            // m = get_best_example(alg_name);
+            get_next_work(alg_name);
+        }
+        previous = clique_count;
+    }
+}
 
 int main(int argc, char** argv) {
     if (argc == 2) {
@@ -498,5 +541,6 @@ int main(int argc, char** argv) {
         fclose(file);
     }
     // random_flip();
-    best_clique();
+    // best_clique();
+    end_flip();
 }
