@@ -118,7 +118,7 @@ public class GreetingServer extends Thread {
                 }
                 break;
             case "EndFlip":
-                if ((m >= bestClique.getWidth()) && (cliqueCount < bestClique.getCliqueCount())) {
+                if ((m >= bestEndFlipClique.getWidth()) && (cliqueCount < bestEndFlipClique.getCliqueCount())) {
                     bestEndFlipClique = new PartyState(m, cliqueCount, s);
                 }
                 break;
