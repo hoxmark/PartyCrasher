@@ -255,7 +255,7 @@ public class GreetingServer extends Thread {
         String newBody = "";
         for(int i = 0; i< m*m; i++){
             newBody += oldBody.charAt(i);
-            if (i % m == 0) newBody += "0";
+            if ((i+1) % m == 0) newBody += "0";
         }
         for(int i = 0; i<m+1;i++){
             newBody += "0";
