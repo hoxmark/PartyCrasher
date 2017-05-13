@@ -44,6 +44,8 @@ bool send_all(int socket, char* alg_name, int* buffer, size_t length);
 
 int random_int(int min, int max) { return min + rand() % (max - min); }
 
+char* server_ip;
+int server_port;
 int* g;
 int m, clique_count;
 
@@ -125,7 +127,7 @@ int recv_timeout(int s, int timeout) {
     return total_size;
 }
 
-void get_next_work(char *alg_name) {
+void get_next_work(char* alg_name) {
     int sock = build_socket();
     char clientMessage[100], server_reply[600000], buf[512];
 
@@ -143,8 +145,8 @@ void get_next_work(char *alg_name) {
     // Receive a reply from the server
     size_t count = 0, i = 0;
     size_t res = recv(sock, buf, 512, 0);
-    while(res != 0 && count < 600000){
-        for(i = 0; i < res ; i++){
+    while (res != 0 && count < 600000) {
+        for (i = 0; i < res; i++) {
             server_reply[count] = buf[i];
             count++;
         }
@@ -153,7 +155,7 @@ void get_next_work(char *alg_name) {
     shutdown(sock, 2); // outgoing
     close(sock);
     printf("Server reply: %c\n", server_reply[0]);
-    if(server_reply[0] != 'C'){
+    if (server_reply[0] != 'C') {
         m = 0;
         char m_string[600000];
         sscanf(server_reply, "%d %s", &m, m_string);
@@ -161,9 +163,9 @@ void get_next_work(char *alg_name) {
         printf("We got a new work item. At %d \n", m);
 
         free(g);
-        g = (int *) malloc(m * m * sizeof(int));
+        g = (int*)malloc(m * m * sizeof(int));
 
-        for(i = 0; i < m * m; i++){
+        for (i = 0; i < m * m; i++) {
             g[i] = m_string[i] - '0';
         }
         // print_counterexample(g, m);
@@ -276,9 +278,9 @@ int build_socket() {
     }
     // puts("Socket created");
 
-    server.sin_addr.s_addr = inet_addr("104.198.30.238");
+    server.sin_addr.s_addr = inet_addr(server_ip);
     server.sin_family = AF_INET;
-    server.sin_port = htons(5001);
+    server.sin_port = htons(server_port);
     // Connect to remote server
     if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
         perror("Connection failed. Retrying in 20 seconds");
@@ -469,7 +471,7 @@ void best_clique() {
 
         timediff =
             (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
-        if (timediff > 100) {
+        if (timediff > 62) {
             gettimeofday(&begin, NULL);
             send_counterexample(alg_name, g, m);
             // m = get_best_example(alg_name);
@@ -491,7 +493,7 @@ void end_flip() {
     get_next_work(alg_name);
     while (1) {
         int row = random_int(0, m);
-        int column = m-1;
+        int column = m - 1;
 
         flip_entry(g, row, column, m);
         clique_count = CliqueCount(g, m);
@@ -512,7 +514,7 @@ void end_flip() {
 
         timediff =
             (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
-        if (timediff > 100) {
+        if (timediff > 62) {
             gettimeofday(&begin, NULL);
             send_counterexample(alg_name, g, m);
             // m = get_best_example(alg_name);
@@ -523,24 +525,25 @@ void end_flip() {
 }
 
 int main(int argc, char** argv) {
-    if (argc == 2) {
-        FILE* file = fopen(argv[1], "r");
-        int count;
-        fscanf(file, "%d", &m);
-        fscanf(file, "%d", &count);
-        printf("M: %d\n", m);
-        printf("Count: %d\n", count);
+    if (argc != 5)
+        printf("Wrong number of arguments");
+    else if (argc == 5) {
+        server_ip = argv[1];
+        server_port = atoi(argv[2]);
+        int alg_type = atoi(argv[3]);
+        int arg = atoi(argv[4]);
 
-        g = (int*)malloc(m * m * sizeof(int));
+        switch (alg_type) {
+        case 1:
+            random_flip();
+            break;
 
-        int i;
-        for (i = 0; i < m * m; i++) {
-            fscanf(file, "%d", &g[i]);
+        case 2:
+            best_clique();
+            break;
+        case 3:
+            end_flip();
+            break;
         }
-        m = 20;
-        fclose(file);
     }
-    // random_flip();
-    // best_clique();
-    end_flip();
 }
