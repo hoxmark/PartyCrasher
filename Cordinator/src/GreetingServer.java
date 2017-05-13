@@ -18,10 +18,12 @@ public class GreetingServer extends Thread {
     private ServerSocket serverSocket;
     private String R_CONTINE = "CONTINUE";
     private PartyState bestClique;
+    private PartyState bestEndFlipClique;
 
     public GreetingServer(int port) throws IOException {
         serverSocket = new ServerSocket(port);
         bestClique = new PartyState(0, Integer.MAX_VALUE, "");
+        bestEndFlipClique = new PartyState(0, Integer.MAX_VALUE, "");
 
         try {
             generateNewWidth();
@@ -92,7 +94,6 @@ public class GreetingServer extends Thread {
     }
 
     void sendBestSampleToClient(Socket client, String alg) throws Exception {
-        System.out.println("Send sample");
         PrintStream out = new PrintStream(client.getOutputStream(), true);
         switch (alg) {
         case "RandomFlip": {
@@ -102,19 +103,13 @@ public class GreetingServer extends Thread {
         }
 
         case "BestClique": {
-            String pras = "";
-            for (int i = 0; i < bestClique.getWidth(); i++) {
-                for (int j = 0; j < bestClique.getWidth(); j++) {
-                    pras += bestClique.getBody().charAt(i * bestClique.getWidth() + j);
-                }
-                pras += "\n";
-            }
-            // System.out.println(pras); 
-            // out.print(pras.replace(" ", "").replace("\n", ""));
             out.print(bestClique.getBody());
-            // System.out.println(bestClique.getBody());
             break;
         }
+
+        case "EndFLip":
+            out.print(bestEndFlipClique.getBody());
+            break;
         }
     }
 
@@ -124,9 +119,11 @@ public class GreetingServer extends Thread {
     }
 
     void clientHello(Socket client, String alg, String clientBest, String clientBestClique) throws IOException {
-        int clientBestInt = Integer.parseInt(clientBest);
-        String serverBestString = findBestCounterExample();
-        int serverBestInt = Integer.parseInt(serverBestString);
+        int clientBestWidth = Integer.parseInt(clientBest);
+
+        String serverBestWidthString = findBestCounterExample();
+        int serverBestWidth = Integer.parseInt(serverBestWidthString);
+
         int clientBestCliqueCount = Integer.parseInt(clientBestClique);
         System.out.println("Client: " + client.getInetAddress() + " \t\t alg: " + alg + " \t\tproblem: " + clientBest
                 + " \t\tBest Clique: " + clientBestClique);
@@ -134,32 +131,45 @@ public class GreetingServer extends Thread {
         PrintStream out = new PrintStream(client.getOutputStream(), true);
         switch (alg) {
         case "RandomFlip": {
-            if (clientBestInt <= serverBestInt) {
-                //return best counterexmaple to client
-                System.out.println("serverBestString:" + serverBestString);
-                out.println(serverBestString);
+            if (clientBestWidth <= serverBestWidth) {
+                // Client working on a worse width. Update the client 
+                System.out.println("serverBestString:" + serverBestWidthString);
+                out.println(serverBestWidthString);
             } else {
                 out.println(R_CONTINE);
             }
             break;
         }
         case "BestClique": {
-            if (clientBestInt <= serverBestInt) {
+            if (clientBestWidth <= serverBestWidth) {
+                //return best counterexmaple to client
+                System.out.println("serverBestString:" + serverBestWidthString);
+                out.println(serverBestWidthString);
+            } else {
+                if (clientBestCliqueCount > bestClique.getCliqueCount()) {
+                    out.println(bestClique.getWidth());
+                } else
+                    out.println(R_CONTINE);
+            }
+            break;
+        }
+
+        case "EndFlip": {
+            if (clientBestWidth <= serverBestWidth) {
                 //return best counterexmaple to client
                 System.out.println("serverBestString:" + serverBestString);
                 out.println(serverBestString);
 
             } else {
                 if (clientBestCliqueCount > bestClique.getCliqueCount()) {
-                    out.println(bestClique.getWidth());
+                    out.println(bestEndFlipClique.getWidth());
                 } else
                     out.println(R_CONTINE);
-
             }
             break;
         }
         case "BruteForce": {
-            if (clientBestInt <= serverBestInt) {
+            if (clientBestWidth <= serverBestWidth) {
                 //return best counterexmaple to client
                 System.out.println("serverBestString:" + serverBestString);
                 out.println(serverBestString);
@@ -203,31 +213,18 @@ public class GreetingServer extends Thread {
             }
 
         } else {
-
-            // System.out.print("UPDAETETEING");
-            if ((m >= bestClique.getWidth()) && (cliqueCount < bestClique.getCliqueCount())) {
-                bestClique = new PartyState(m, cliqueCount, s);
+            switch (alg) {
+            case "BestClique":
+                if ((m >= bestClique.getWidth()) && (cliqueCount < bestClique.getCliqueCount())) {
+                    bestClique = new PartyState(m, cliqueCount, s);
+                }
+                break;
+            case "EndFlip":
+                if ((m >= bestClique.getWidth()) && (cliqueCount < bestClique.getCliqueCount())) {
+                    bestEndFlipClique = new PartyState(m, cliqueCount, s);
+                }
+                break;
             }
-
-            // String pras = "";
-            // for (int i = 0; i < bestClique.getWidth(); i++) {
-            //     for (int j = 0; j < bestClique.getWidth(); j++) {
-            //         pras += bestClique.getBody().charAt(i * bestClique.getWidth() + j);
-            //     }
-            //     pras += "\n";
-            // }
-            // System.out.println(pras);
-
-            // File file = new File("../../cliqueexamples/"+width+"/" + clientClique + ".txt");
-            // file.getParentFile().mkdirs();
-            // BufferedWriter writer = new BufferedWriter(new FileWriter(file)); 
-            // writer.write(m + " 0 \n"); 
-
-            // for(int i = 0; i < m * m; i++){
-            //     if(i % m == 0 && i != 0) writer.write("\n");
-            //     writer.write(s.charAt(i) + " "); 
-            // }
-            // writer.flush(); 
         }
     }
     //PostExample alg bredde 
@@ -235,51 +232,60 @@ public class GreetingServer extends Thread {
     void getCliqueCount(Socket client, String alg, String width, String clientClique) {
         int m = Integer.parseInt(width);
         int cliqueCount = Integer.parseInt(clientClique);
-        //State or 
-
-        // if (bestClique.getWidth() != m){
-        //     out.print("RESET");
-        //     return ; 
-        // } 
-
     }
 
     void generateNewWidth() throws Exception {
         String best = findBestCounterExample();
         int m = Integer.parseInt(best);
-        bestClique.setWidth(m+1);
+        bestClique.setWidth(m + 1);
         bestClique.setCliqueCount(Integer.MAX_VALUE);
 
+        bestEndFlipClique.setWidth(m + 1);
+        bestEndFlipClique.setCliqueCount(Integer.MAX_VALUE);
+
         String file = fileToString(best);
-        String oldBody = file.substring(file.indexOf('\n') + 1).replace(" ", "").replace("\n", ""); 
+        String oldBody = file.substring(file.indexOf('\n') + 1).replace(" ", "").replace("\n", "");
         String newBody = "";
-        for(int i = 0; i< m*m; i++){
+        for (int i = 0; i < m * m; i++) {
             newBody += oldBody.charAt(i);
-            if ((i+1) % m == 0) newBody += "0";
+            if ((i + 1) % m == 0)
+                newBody += "0";
         }
-        for(int i = 0; i<m+1;i++){
+        for (int i = 0; i < m + 1; i++) {
             newBody += "0";
         }
         // System.out.print(newBody);
         bestClique.setBody(newBody);
+        bestEndFlipClique.setBody(newBody);
     }
 
-    void getNextWork(Socket client, String alg, String width, String clientClique) throws Exception {
-        int m = Integer.parseInt(width);
-        int cliqueCount = Integer.parseInt(clientClique);
-        System.out.println("Client: " + client.getInetAddress() + " \t\t alg: " + alg + " \t\tproblem: " + width
-                + " \t\tBest Clique: " + clientClique);
-            System.out.println("Returning " + bestClique.getCliqueCount());
-        //State or  
+    void getNextWork(Socket client, String alg, String clientWidthString, String clientCliqueString) throws Exception {
+        int clientWidth = Integer.parseInt(clientWidthString);
+        int clientCliqueCount = Integer.parseInt(clientCliqueString);
+        System.out.println("Client: " + client.getInetAddress() + " \t\t alg: " + alg + " \t\tproblem: "
+                + clientWidthString + " \t\tBest Clique: " + clientCliqueString);
+
+        System.out.println("Returning " + bestClique.getCliqueCount());
         PrintStream out = new PrintStream(client.getOutputStream(), true);
-        if (m == bestClique.getWidth() && cliqueCount < bestClique.getCliqueCount()) {
-            System.out.println("@@@@@@@@@@@@@CONTINUE");
-            out.print(R_CONTINE);
-        } else {
-            // System.out.println("Returning " + bestClique.getWidth());
-            // System.out.println("Returning " + bestClique.getBody());
-            out.print(bestClique.getWidth() + " " + bestClique.getBody());
-            client.close();
+
+        switch (alg) {
+        case "BestClique":
+            if (clientWidth == bestClique.getWidth() && cliqueCount < bestClique.getCliqueCount()) {
+                out.print(R_CONTINE);
+            } else {
+                out.print(bestClique.getWidth() + " " + bestClique.getBody());
+                client.close();
+            }
+            break;
+
+        case "EndFlip":
+            if (clientWidth == bestEndFlipClique.getWidth() && clientCliqueCount < bestEndFlipClique.getCliqueCount()) {
+                out.print(R_CONTINE);
+            } else {
+                out.print(bestEndFlipClique.getWidth() + " " + bestEndFlipClique.getBody());
+                client.close();
+            }
+            break;
         }
     }
 
