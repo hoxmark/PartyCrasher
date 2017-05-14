@@ -480,7 +480,7 @@ void best_clique() {
         previous = clique_count;
     }
 }
-void end_flip() {
+void end_flip(int number_of_bits_request) {
     char* alg_name = "EndFlip";
 
     clique_count = INT_MAX;
@@ -492,10 +492,15 @@ void end_flip() {
     // m = get_best_example(alg_name);
     get_next_work(alg_name);
     while (1) {
-        int row = random_int(0, m);
-        int column = m - 1;
+        int row, column;
+        int number_of_bits = number_of_bits_request;
+        while (number_of_bits>0){            
+            row = random_int(0, m);
+            column = m-1;
+            flip_entry(g, row, column, m);
+            number_of_bits = number_of_bits-1;  
+        }
 
-        flip_entry(g, row, column, m);
         clique_count = CliqueCount(g, m);
         printf("Number of cliques at %d: %d\n", m, clique_count);
         if (clique_count == 0) {
@@ -542,7 +547,7 @@ int main(int argc, char** argv) {
             best_clique();
             break;
         case 3:
-            end_flip();
+            end_flip(arg);
             break;
         }
     }
