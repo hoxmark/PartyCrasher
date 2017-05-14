@@ -7,7 +7,7 @@
 
 Universe       = vanilla
 Executable     = client.o  
-Arguments      = 104.198.30.238 5003 3 8
+Arguments      = 104.198.30.238 5004 3 8
 Log = client.log
 Output  = client.out                
                                                   
