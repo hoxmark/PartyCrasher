@@ -306,12 +306,12 @@ int main(int argc, char** argv) {
         server_port = atoi(argv[2]);
         int alg_type = atoi(argv[3]);
         int arg = atoi(argv[4]);
-
+        //TODO make a case 1
         switch (alg_type) {
-        case 1:
+        case 2:
             best_clique();
             break;
-        case 2:
+        case 3:
             end_flip(arg);
             break;
         }
