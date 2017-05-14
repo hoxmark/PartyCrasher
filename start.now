@@ -1,0 +1,8 @@
+#!/bin/bash
+
+condor_submit endFlip1.submit 
+condor_submit endFlip4.submit 
+condor_submit endFlip8.submit 
+condor_submit endFlip64.submit 
+condor_submit bestClique.submit 
+
