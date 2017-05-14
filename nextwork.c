@@ -297,7 +297,7 @@ void end_flip(int number_of_bits_request) {
 }
 
 int main(int argc, char** argv) {
-    update_interval = 10;
+    update_interval = 70;
 
     if (argc != 5)
         printf("Wrong number of arguments");

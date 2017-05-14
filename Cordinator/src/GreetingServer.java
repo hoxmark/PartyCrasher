@@ -8,6 +8,9 @@ import java.nio.file.*;
 import java.text.Normalizer.Form;
 import java.nio.charset.*;
 import java.lang.Process.*;
+import java.util.Date; 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 import org.omg.CORBA.PRIVATE_MEMBER;
 
@@ -33,6 +36,7 @@ public class GreetingServer extends Thread {
     }
 
     public void run() {
+        Logger.logString("Server running"); 
         while (true) {
             try {
                 Socket client = serverSocket.accept();
@@ -84,10 +88,9 @@ public class GreetingServer extends Thread {
         int m = Integer.parseInt(width);
         int cliqueCount = Integer.parseInt(clientClique);
         Logger.logClient(client.getInetAddress().toString(), alg, width, clientClique);
-        
 
         if (cliqueCount == 0 && m == bestClique.getWidth()) {
-            Logger.logEvent(alg.toUpperCase() + " FOUND COUNTEREXAMPLE - SAVING");
+            Logger.logNewCounterExample(alg, width); 
 
             File file = new File("../../counterexamples/" + m + ".txt");
             BufferedWriter writer = new BufferedWriter(new FileWriter(file));
@@ -256,25 +259,34 @@ class Logger {
     public static void logEvent(String eventName) {
         printString("**************************** " + eventName + " ****************************");
     }
-
     public static void logClient(String address, String algorithm, String width, String cliqueCount) {
-        System.out.printf("%-30s %-30s %-30s %-30s\n", "Client: " + address, "Alg: " + algorithm, "Problem: " + width,
-                "Best Clique: " + cliqueCount);
+        printString(String.format("%-30s %-30s %-30s %-30s", "Client: " + address, "Alg: " + algorithm,
+                "Problem: " + width, "Best Clique: " + cliqueCount));
     }
 
     public static void logReturnContinue() {
-        printString("RETURNING: CONTINUE");
+        printString("RETURNING: CONTINUE\n");
     }
 
     public static void logReturnClique(int width, int cliqueCount) {
-        System.out.printf("%-10s %-5s %-5s\n", "RETURNING:", width, cliqueCount);
+        printString(String.format("%-10s %-5s %-5s\n", "RETURNING:", width, cliqueCount));
     }
 
     public static void logBetterCliqueCount(String algorithm, int cliqueCount) {
-        System.out.printf("%-10s %-10s\n", algorithm + " better count", cliqueCount);
+        printString(String.format("%-10s %-10s", algorithm + " better count", cliqueCount));
     }
 
-    public static void printString(String s) {
-        System.out.println(s);
+    public static void logNewCounterExample(String algorithm, String width){
+        printString(">>>>>>>>>>>> " + algorithm + " FOUND NEW COUNTER EXAMPLE AT " + width + "<<<<<<<<<<<<<<<<<<");
+    }
+    
+    public static void logString(String s){
+        printString(s + "\n");
+    }
+
+    private static void printString(String s) {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = new Date();
+        System.out.println(String.format("%-15s %-50s", dateFormat.format(date), s));
     }
 }
