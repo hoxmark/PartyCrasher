@@ -35,11 +35,7 @@ public class GreetingServer extends Thread {
     public void run() {
         while (true) {
             try {
-                System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
                 Socket client = serverSocket.accept();
-
-                System.out.println("Just connected to " + client.getRemoteSocketAddress());
-
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 String line = in.readLine();
                 String[] lines = line.split("\\s+");
@@ -84,14 +80,14 @@ public class GreetingServer extends Thread {
     }
 
     void postExample(Socket client, String alg, String width, String clientClique, String s) throws IOException {
+        Logger.logEvent("POSTEXAMPLE");
         int m = Integer.parseInt(width);
         int cliqueCount = Integer.parseInt(clientClique);
-
-        System.out.println("Client: " + client.getInetAddress() + " \t\t alg: " + alg + " \t\tproblem: " + width
-                + " \t\tBest Clique: " + clientClique);
+        Logger.logClient(client.getInetAddress().toString(), alg, width, clientClique);
+        
 
         if (cliqueCount == 0 && m == bestClique.getWidth()) {
-            System.out.println("########Clique count at 0, saving. ########");
+            Logger.logEvent(alg.toUpperCase() + " FOUND COUNTEREXAMPLE - SAVING");
 
             File file = new File("../../counterexamples/" + m + ".txt");
             BufferedWriter writer = new BufferedWriter(new FileWriter(file));
@@ -115,11 +111,13 @@ public class GreetingServer extends Thread {
             case "BestClique":
                 if ((m >= bestClique.getWidth()) && (cliqueCount < bestClique.getCliqueCount())) {
                     bestClique = new PartyState(m, cliqueCount, s);
+                    Logger.logBetterCliqueCount(alg, bestClique.getCliqueCount());
                 }
                 break;
             case "EndFlip":
                 if ((m >= bestEndFlipClique.getWidth()) && (cliqueCount < bestEndFlipClique.getCliqueCount())) {
                     bestEndFlipClique = new PartyState(m, cliqueCount, s);
+                    Logger.logBetterCliqueCount(alg, bestEndFlipClique.getCliqueCount());
                 }
                 break;
             }
@@ -151,36 +149,40 @@ public class GreetingServer extends Thread {
         bestEndFlipClique.setBody(newBody);
     }
 
-    String getUniversalBestClique() {
-        return bestEndFlipClique.getCliqueCount() < bestClique.getCliqueCount()
-                ? bestEndFlipClique.getWidth() + " " + bestEndFlipClique.getBody()
-                : bestClique.getWidth() + " " + bestClique.getBody();
+    PartyState getUniversalBestClique() {
+        return bestEndFlipClique.getCliqueCount() < bestClique.getCliqueCount() ? bestEndFlipClique : bestClique;
     }
 
     void getNextWork(Socket client, String alg, String clientWidthString, String clientCliqueString) throws Exception {
-        System.out.println("Client: " + client.getInetAddress() + " \t\t alg: " + alg + " \t\tproblem: "
-                + clientWidthString + " \t\tBest Clique: " + clientCliqueString);
+        Logger.logEvent("GETNEXTWORK");
         int clientWidth = Integer.parseInt(clientWidthString);
         int clientCliqueCount = Integer.parseInt(clientCliqueString);
 
-        System.out.println("Returning " + bestClique.getCliqueCount());
         PrintStream out = new PrintStream(client.getOutputStream(), true);
+
+        Logger.logClient(client.getInetAddress().toString(), alg, clientWidthString, clientCliqueString);
 
         switch (alg) {
         case "BestClique":
-            if (clientWidth == bestClique.getWidth() && clientCliqueCount < bestClique.getCliqueCount()) {
+            PartyState bestState = getUniversalBestClique();
+            if (clientWidth == bestState.getWidth() && clientCliqueCount <= bestState.getCliqueCount()) {
                 out.print(R_CONTINE);
+                Logger.logReturnContinue();
             } else {
-                out.print(getUniversalBestClique());
+                Logger.logReturnClique(bestState.getWidth(), bestState.getCliqueCount());
+                out.print(bestState.getWidth() + " " + bestState.getBody());
                 client.close();
             }
             break;
 
         case "EndFlip":
-            if (clientWidth == bestEndFlipClique.getWidth() && clientCliqueCount < bestEndFlipClique.getCliqueCount()) {
+            if (clientWidth == bestEndFlipClique.getWidth()
+                    && clientCliqueCount <= bestEndFlipClique.getCliqueCount()) {
                 out.print(R_CONTINE);
+                Logger.logReturnContinue();
             } else {
                 out.print(bestEndFlipClique.getWidth() + " " + bestEndFlipClique.getBody());
+                Logger.logReturnClique(bestEndFlipClique.getWidth(), bestEndFlipClique.getCliqueCount());
                 client.close();
             }
             break;
@@ -204,7 +206,7 @@ public class GreetingServer extends Thread {
     }
 
     public static void main(String[] args) {
-        int port = 5001;//Integer.parseInt(args[0]);
+        int port = 5003;//Integer.parseInt(args[0]);
         try {
             Thread t = new GreetingServer(port);
             t.start();
@@ -247,5 +249,32 @@ class PartyState {
 
     public void setBody(String body) {
         this.body = body;
+    }
+}
+
+class Logger {
+    public static void logEvent(String eventName) {
+        printString("**************************** " + eventName + " ****************************");
+    }
+
+    public static void logClient(String address, String algorithm, String width, String cliqueCount) {
+        System.out.printf("%-30s %-30s %-30s %-30s\n", "Client: " + address, "Alg: " + algorithm, "Problem: " + width,
+                "Best Clique: " + cliqueCount);
+    }
+
+    public static void logReturnContinue() {
+        printString("RETURNING: CONTINUE");
+    }
+
+    public static void logReturnClique(int width, int cliqueCount) {
+        System.out.printf("%-10s %-5s %-5s\n", "RETURNING:", width, cliqueCount);
+    }
+
+    public static void logBetterCliqueCount(String algorithm, int cliqueCount) {
+        System.out.printf("%-10s %-10s\n", algorithm + " better count", cliqueCount);
+    }
+
+    public static void printString(String s) {
+        System.out.println(s);
     }
 }
