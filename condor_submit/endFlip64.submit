@@ -1,0 +1,14 @@
+############
+#
+# 
+# Out first submit
+#
+############
+
+Universe       = vanilla
+Executable     = client.o  
+Arguments      = 104.198.30.238 5003 3 64
+Log = client.log
+Output  = client.out                
+                                                  
+Queue 1
