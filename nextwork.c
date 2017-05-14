@@ -47,7 +47,8 @@ int random_int(int min, int max) { return min + rand() % (max - min); }
 char* server_ip;
 int server_port;
 int* g;
-int m, clique_count;
+int* best_g;
+int m, best_m, clique_count, best_clique_count;
 
 void print_counterexample(int* g, int m) {
     int i, j;
@@ -131,7 +132,7 @@ void get_next_work(char* alg_name) {
     int sock = build_socket();
     char clientMessage[100], server_reply[600000], buf[512];
 
-    sprintf(clientMessage, "GetNextWork %s %d %d", alg_name, m, clique_count);
+    sprintf(clientMessage, "GetNextWork %s %d %d", alg_name, best_m, best_clique_count);
 
     printf("%s \n", clientMessage);
     if (send(sock, clientMessage, strlen(clientMessage), 0) < 0) {
@@ -356,7 +357,7 @@ void increment_counter() {
 
 bool send_all(int socket, char* alg_name, int* buffer, size_t length) {
     char message_head[40];
-    sprintf(message_head, "PostExample %s %d %d ", alg_name, m, clique_count);
+    sprintf(message_head, "PostExample %s %d %d ", alg_name, best_m, best_clique_count);
     // printf("Message head: %s \n", message_head);
 
     char message_body[length];
@@ -383,7 +384,7 @@ bool send_all(int socket, char* alg_name, int* buffer, size_t length) {
 
 void send_counterexample(char* alg_name, int* g, int m) {
     int sock = build_socket();
-    send_all(sock, alg_name, g, m * m);
+    send_all(sock, alg_name, best_g, best_m * best_m);
     close(sock);
 }
 
@@ -471,7 +472,7 @@ void best_clique() {
 
         timediff =
             (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
-        if (timediff > 62) {
+        if (timediff > 10) {
             gettimeofday(&begin, NULL);
             send_counterexample(alg_name, g, m);
             // m = get_best_example(alg_name);
@@ -480,10 +481,24 @@ void best_clique() {
         previous = clique_count;
     }
 }
+
+void update_best_clique(){
+    free(best_g);
+    best_g = (int *)malloc(m * m * sizeof(int));
+    int i;
+    for(i = 0; i < m * m; i++){
+        best_g[i] = g[i];
+    }
+    best_m = m;
+    best_clique_count = clique_count;
+}
+
+
 void end_flip() {
     char* alg_name = "EndFlip";
 
     clique_count = INT_MAX;
+    best_clique_count = INT_MAX;
     int previous = INT_MAX;
     double timediff;
     struct timeval begin, now;
@@ -497,34 +512,62 @@ void end_flip() {
 
         flip_entry(g, row, column, m);
         clique_count = CliqueCount(g, m);
-        printf("Number of cliques at %d: %d\n", m, clique_count);
+        printf("Number of cliques at %d: %d - best is %d\n", m, clique_count, best_clique_count);
         if (clique_count == 0) {
+            best_clique_count = 0;
             send_counterexample(alg_name, g, m);
             get_next_work(alg_name);
             clique_count = INT_MAX;
+            best_clique_count = INT_MAX;
         }
 
         // Flip back if worse
-        if (clique_count > previous) {
+        // if (clique_count > previous) {
+        //     flip_entry(g, row, column, m);
+        // }_
+
+        if(clique_count < best_clique_count){
+            printf("Updating best ");
+            update_best_clique();
+        }else {
             flip_entry(g, row, column, m);
-            // clique_count = previous;
         }
 
         gettimeofday(&now, NULL);
 
         timediff =
             (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
-        if (timediff > 62) {
+        if (timediff > 10) {
             gettimeofday(&begin, NULL);
             send_counterexample(alg_name, g, m);
             // m = get_best_example(alg_name);
             get_next_work(alg_name);
         }
-        previous = clique_count;
+        // previous = clique_count;
+        printf("----------------\n");
     }
 }
 
 int main(int argc, char** argv) {
+    // if (argc == 2) {
+    //     FILE* file = fopen(argv[1], "r");
+    //     int count;
+    //     fscanf(file, "%d", &m);
+    //     fscanf(file, "%d", &count);
+    //     printf("M: %d\n", m);
+    //     printf("Count: %d\n", count);
+    //
+    //     g = (int*)malloc(m * m * sizeof(int));
+    //
+    //     int i;
+    //     for (i = 0; i < m * m; i++) {
+    //         fscanf(file, "%d", &g[i]);
+    //     }
+    //     m = 20;
+    //     fclose(file);
+    // }
+    //
+
     if (argc != 5)
         printf("Wrong number of arguments");
     else if (argc == 5) {
