@@ -298,6 +298,10 @@ int main(int argc, char** argv) {
     currentState = &standard;
     bestState = &standard2;
 
+    // Allocate to one int to be able to free it the first time
+    currentState->g = (int *) malloc(sizeof(int));
+    bestState->g = (int *) malloc(sizeof(int));
+
     if (argc != 5)
         printf("Wrong number of arguments");
     else if (argc == 5) {
