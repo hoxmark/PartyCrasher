@@ -73,12 +73,8 @@ public class GreetingServer extends Thread {
                 }
                 client.close();
 
-            } catch (SocketTimeoutException s) {
-                System.out.println("Socket timed out!");
-                break;
-            } catch (IOException e) {
-                e.printStackTrace();
-                break;
+            } catch (Exception e) {
+                Logger.logError(e);
             }
         }
     }
