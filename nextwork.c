@@ -191,8 +191,11 @@ void update_best_clique() {
 void reset_state() {
     currentState->clique_count = INT_MAX;
     currentState->width = 0;
+    currentState->num_calculations = 0;
     bestState->clique_count = INT_MAX;
     bestState->width = 0;
+    bestState->num_calculations = 0;
+
     free(currentState->g);
     free(bestState->g);
     currentState->g = NULL;
