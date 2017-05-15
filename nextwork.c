@@ -291,7 +291,7 @@ void end_flip(int number_of_bits_request) {
 }
 
 int main(int argc, char** argv) {
-    update_interval = 15;
+    update_interval = 100;
 
     // Initialize structs
     struct PartyState standard, standard2;
