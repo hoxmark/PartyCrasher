@@ -8,11 +8,21 @@ import java.nio.file.*;
 import java.text.Normalizer.Form;
 import java.nio.charset.*;
 import java.lang.Process.*;
-import java.util.Date; 
+import java.util.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.omg.CORBA.PRIVATE_MEMBER;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.MongoClient;
+import static com.mongodb.client.model.Filters.*;
 
 import java.io.*;
 import java.util.Collections;
@@ -36,7 +46,7 @@ public class GreetingServer extends Thread {
     }
 
     public void run() {
-        Logger.logString("Server running"); 
+        Logger.logString("Server running");
         while (true) {
             try {
                 Socket client = serverSocket.accept();
@@ -46,8 +56,8 @@ public class GreetingServer extends Thread {
 
                 switch (lines[0]) {
                 case "PostExample":
-                    //PostExample alg bredde, clic, state  
-                    postExample(client, lines[1], lines[2], lines[3], lines[4]);
+                    //PostExample alg bredde, clic, calcs, state  
+                    postExample(client, lines[1], lines[2], lines[3], lines[4], lines[5]);
                     break;
                 case "GetNextWork":
                     //PostExample alg bredde 
@@ -83,14 +93,18 @@ public class GreetingServer extends Thread {
         return new String(encoded, encoding);
     }
 
-    void postExample(Socket client, String alg, String width, String clientClique, String s) throws IOException {
-        Logger.logEvent("POSTEXAMPLE");
-        int m = Integer.parseInt(width);
-        int cliqueCount = Integer.parseInt(clientClique);
+    void postExample(Socket client, String alg, String width, String clientClique, String calculations, String s)
+            throws IOException {
+        Logger.logEvent("POST EXAMPLE");
         Logger.logClient(client.getInetAddress().toString(), alg, width, clientClique);
 
+        DAO.updateCalculationCount(alg, Integer.parseInt(width), Integer.parseInt(calculations));
+
+        int m = Integer.parseInt(width);
+        int cliqueCount = Integer.parseInt(clientClique);
+
         if (cliqueCount == 0 && m == bestClique.getWidth()) {
-            Logger.logNewCounterExample(alg, width); 
+            Logger.logNewCounterExample(alg, width);
 
             File file = new File("../../counterexamples/" + m + ".txt");
             BufferedWriter writer = new BufferedWriter(new FileWriter(file));
@@ -157,14 +171,13 @@ public class GreetingServer extends Thread {
     }
 
     void getNextWork(Socket client, String alg, String clientWidthString, String clientCliqueString) throws Exception {
-        Logger.logEvent("GETNEXTWORK");
+        Logger.logEvent("GET NEXT WORK");
+        Logger.logClient(client.getInetAddress().toString(), alg, clientWidthString, clientCliqueString);
+
         int clientWidth = Integer.parseInt(clientWidthString);
         int clientCliqueCount = Integer.parseInt(clientCliqueString);
 
         PrintStream out = new PrintStream(client.getOutputStream(), true);
-
-        Logger.logClient(client.getInetAddress().toString(), alg, clientWidthString, clientCliqueString);
-
         switch (alg) {
         case "BestClique":
             PartyState bestState = getUniversalBestClique();
@@ -173,7 +186,7 @@ public class GreetingServer extends Thread {
                 Logger.logReturnContinue();
             } else {
                 Logger.logReturnClique(bestState.getWidth(), bestState.getCliqueCount());
-                out.print(bestState.getWidth() + " " + bestState.getBody());
+                out.print(bestState.getWidth() + " " + bestState.getCliqueCount() + " " + bestState.getBody());
                 client.close();
             }
             break;
@@ -184,7 +197,8 @@ public class GreetingServer extends Thread {
                 out.print(R_CONTINE);
                 Logger.logReturnContinue();
             } else {
-                out.print(bestEndFlipClique.getWidth() + " " + bestEndFlipClique.getBody());
+                out.print(bestEndFlipClique.getWidth() + " " + bestEndFlipClique.getCliqueCount() + " "
+                        + bestEndFlipClique.getBody());
                 Logger.logReturnClique(bestEndFlipClique.getWidth(), bestEndFlipClique.getCliqueCount());
                 client.close();
             }
@@ -209,7 +223,7 @@ public class GreetingServer extends Thread {
     }
 
     public static void main(String[] args) {
-        int port = 5003;//Integer.parseInt(args[0]);
+        int port = 5004;//Integer.parseInt(args[0]);
         try {
             Thread t = new GreetingServer(port);
             t.start();
@@ -259,6 +273,7 @@ class Logger {
     public static void logEvent(String eventName) {
         printString("**************************** " + eventName + " ****************************");
     }
+
     public static void logClient(String address, String algorithm, String width, String cliqueCount) {
         printString(String.format("%-30s %-30s %-30s %-30s", "Client: " + address, "Alg: " + algorithm,
                 "Problem: " + width, "Best Clique: " + cliqueCount));
@@ -276,17 +291,83 @@ class Logger {
         printString(String.format("%-10s %-10s", algorithm + " better count", cliqueCount));
     }
 
-    public static void logNewCounterExample(String algorithm, String width){
+    public static void logNewCounterExample(String algorithm, String width) {
         printString(">>>>>>>>>>>> " + algorithm + " FOUND NEW COUNTER EXAMPLE AT " + width + "<<<<<<<<<<<<<<<<<<");
     }
-    
-    public static void logString(String s){
+
+    public static void logString(String s) {
         printString(s + "\n");
+    }
+
+    public static void logError(Exception e) {
+        System.err.println(e.getClass().getName() + ": " + e.getMessage());
     }
 
     private static void printString(String s) {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = new Date();
         System.out.println(String.format("%-15s %-50s", dateFormat.format(date), s));
+    }
+}
+
+class DAO {
+    static MongoClient mongoClient = new MongoClient("localhost", 27017);
+
+    public static void updateCalculationCount(String algorithm, int width, int calculations) {
+        try {
+            // To connect to mongodb server
+
+            // Now connect to your databases
+            DB db = mongoClient.getDB("Calculations");
+            DBCollection collection = db.getCollection("Calculations");
+
+            int existing = 0;
+            BasicDBObject searchQuery = new BasicDBObject();
+            searchQuery.put("width", width);
+            DBCursor cursor = collection.find(searchQuery);
+            boolean found = false;
+
+            Map<String, Integer> newMap = new HashMap<>();
+
+            // Update if we have an existing entry for this width 
+            if (cursor.hasNext()) {
+                BasicDBObject ob = (BasicDBObject) cursor.next();
+                if (ob.get("calculations") != null) {
+                    newMap = (HashMap) ob.get("calculations");
+                    // If entry for this algorithm, get existing and update it 
+                    if (newMap.get(algorithm) != null) {
+                        existing = newMap.get(algorithm);
+                        newMap.put(algorithm, existing + calculations);
+                    } else {
+                        // We don't have an entry for this algorithm 
+                        newMap.put(algorithm, calculations);
+                    }
+                }
+
+                // Update the document
+                BasicDBObject newDocument = new BasicDBObject();
+                newDocument.put("calculations", newMap);
+
+                BasicDBObject updateObj = new BasicDBObject();
+                updateObj.put("$set", newDocument);
+                collection.update(searchQuery, updateObj);
+            } else {
+                // We don't have an entry for this width. create it 
+                BasicDBObject document = new BasicDBObject();
+                document.put("width", width);
+                Map<String, Integer> calcs = new HashMap<>();
+                calcs.put(algorithm, calculations);
+                document.put("calculations", calcs);
+                collection.insert(document);
+            }
+
+            DBCursor cursor2 = collection.find();
+            while (cursor2.hasNext()) {
+                BasicDBObject obj = (BasicDBObject) cursor2.next();
+                System.out.println(obj);
+            }
+        } catch (Exception e) {
+            Logger.logError(e);
+        }
     }
 }
