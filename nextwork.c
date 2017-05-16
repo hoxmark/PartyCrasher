@@ -1,4 +1,5 @@
 #include "clique-count.c"
+#include "clique-count-extend.c"
 #include <arpa/inet.h>
 #include <dirent.h>
 #include <errno.h>
@@ -265,13 +266,13 @@ void end_flip(int num_flips) {
         int row, column;
 
         for (i = 0; i < num_flips; i++) {
-            row = random_int(0, currentState->width);
-            column = currentState->width - 1;
+            row = 0;
+            column = random_int(0, currentState->width);
             flip_entry(currentState->g, row, column, currentState->width);
         }
 
         currentState->clique_count =
-            CliqueCount(currentState->g, currentState->width);
+            CliqueCountExtend(currentState->g, currentState->width);
         bestState->num_calculations++;
 
         printf("Number of cliques at %d: %d - best is %d\n",
@@ -281,7 +282,6 @@ void end_flip(int num_flips) {
         if (currentState->clique_count <= bestState->clique_count) {
             update_best_clique();
         } else {
-            printf("We got a worse clique count. Flipping back \n");
             flip_entry(currentState->g, row, column, currentState->width);
         }
 

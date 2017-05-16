@@ -150,14 +150,17 @@ public class GreetingServer extends Thread {
         String file = fileToString(best);
         String oldBody = file.substring(file.indexOf('\n') + 1).replace(" ", "").replace("\n", "");
         String newBody = "";
-        for (int i = 0; i < m * m; i++) {
-            newBody += oldBody.charAt(i);
-            if ((i + 1) % m == 0)
-                newBody += "0";
-        }
+
         for (int i = 0; i < m + 1; i++) {
             newBody += "0";
         }
+
+        for (int i = 0; i < m * m; i++) {
+            if (i % m == 0)
+                newBody += "0";
+            newBody += oldBody.charAt(i);
+        }
+
         // System.out.print(newBody);
         bestClique.setBody(newBody);
         bestEndFlipClique.setBody(newBody);
