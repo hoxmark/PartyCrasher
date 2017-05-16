@@ -318,7 +318,7 @@ void end_flip(int num_flips) {
 }
 
 int main(int argc, char** argv) {
-    update_interval = 15;
+    update_interval = 50;
 
     // Initialize structs
     struct PartyState standard, standard2;
