@@ -24,7 +24,6 @@ void print_counterexample(int* g, int m);
 int build_socket();
 void reset_state();
 void update_best_clique();
-void is_similar_check();
 void send_counterexample(char* alg_name, int* g, int m);
 bool send_all(int socket, char* alg_name, int* buffer, size_t length);
 
@@ -222,18 +221,17 @@ void best_clique() {
         int column = random_int(row, currentState->width);
 
         flip_entry(currentState->g, row, column, currentState->width);
-        currentState->clique_count =
-            CliqueCount(currentState->g, currentState->width);
-        bestState->num_calculations++;
+        currentState->clique_count = CliqueCount(currentState->g, currentState->width);
+        bestState->num_calculations++
+        ;
         printf("Number of cliques at %d: %d - best is %d\n",
                currentState->width, currentState->clique_count,
                bestState->clique_count);
 
-        if (currentState->clique_count < bestState->clique_count) {
+        if (currentState->clique_count <= bestState->clique_count) {
             update_best_clique();
         } else if (currentState->clique_count > bestState->clique_count) {
             flip_entry(currentState->g, row, column, currentState->width);
-            is_similar_check();
         }
 
         if (currentState->clique_count == 0) {
@@ -253,35 +251,20 @@ void best_clique() {
     }
 }
 
-void is_similar_check(){
-    int i;
-    bool same = true;
-    for(i = 0; i < currentState->width * currentState->width; i++){
-        if(currentState->g[i] != bestState->g[i]){
-            same = false;
-            break;
-        }
-    }
-    if(same) printf("Current and best are the same. \n");
-    else printf("Current and same are NOT the same \n");
-}
-
-void end_flip(int number_of_bits_request) {
+void end_flip(int num_flips) {
     char* alg_name = "EndFlip";
     double timediff;
     struct timeval begin, now;
     gettimeofday(&begin, NULL);
 
     reset_state();
-
     get_next_work(alg_name);
 
     int i;
     while (1) {
         int row, column;
-        int number_of_bits = number_of_bits_request;
 
-        for (i = 0; i < number_of_bits; i++) {
+        for (i = 0; i < num_flips; i++) {
             row = random_int(0, currentState->width);
             column = currentState->width - 1;
             flip_entry(currentState->g, row, column, currentState->width);
@@ -297,11 +280,9 @@ void end_flip(int number_of_bits_request) {
 
         if (currentState->clique_count <= bestState->clique_count) {
             update_best_clique();
-        // } else if (currentState->clique_count > bestState->clique_count) {
         } else {
             printf("We got a worse clique count. Flipping back \n");
             flip_entry(currentState->g, row, column, currentState->width);
-            is_similar_check();
         }
 
         if (currentState->clique_count == 0) {
