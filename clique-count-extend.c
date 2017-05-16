@@ -16,7 +16,7 @@ int CliqueCountExtend(int* g, int gsize) {
     int count = 0;
     int sgsize = 10;
 
-    for (i = 0; i < sgsize + 1; i++) {
+    for (i = 0; i < 1; i++) {
         for (j = i + 1; j < gsize - sgsize + 2; j++) {
             for (k = j + 1; k < gsize - sgsize + 3; k++) {
                 if ((g[i * gsize + j] == g[i * gsize + k]) &&
