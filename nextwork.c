@@ -193,6 +193,21 @@ void update_best_clique() {
            bestState->clique_count);
 }
 
+void update_current_clique() {
+    free(currentState->g);
+    currentState->g = NULL;
+    currentState->g =
+        (int*)malloc(bestState->width * bestState->width * sizeof(int));
+    int i;
+    for (i = 0; i < bestState->width * bestState->width; i++) {
+        currentState->g[i] = bestState->g[i];
+    }
+    currentState->width = bestState->width;
+    currentState->clique_count = bestState->clique_count;
+    printf("Current clique is now %d - %d \n", currentState->width,
+           currentState->clique_count);
+}
+
 void reset_state() {
     currentState->clique_count = INT_MAX;
     currentState->width = 0;
@@ -232,7 +247,7 @@ void best_clique() {
         if (currentState->clique_count <= bestState->clique_count) {
             update_best_clique();
         } else if (currentState->clique_count > bestState->clique_count) {
-            flip_entry(currentState->g, row, column, currentState->width);
+            update_current_clique();
         }
 
         if (currentState->clique_count == 0) {
@@ -282,7 +297,7 @@ void end_flip(int num_flips) {
         if (currentState->clique_count <= bestState->clique_count) {
             update_best_clique();
         } else {
-            flip_entry(currentState->g, row, column, currentState->width);
+            update_current_clique();
         }
 
         if (currentState->clique_count == 0) {
@@ -303,7 +318,7 @@ void end_flip(int num_flips) {
 }
 
 int main(int argc, char** argv) {
-    update_interval = 100;
+    update_interval = 15;
 
     // Initialize structs
     struct PartyState standard, standard2;
