@@ -8,4 +8,5 @@ class Config {
     public static final int ANNEALING_THRESHOLD = 500000;
     public static final int ANNEALING_TIMEOUT_MS = 102 * 1000;
     public static final String R_CONTINE = "CONTINUE";
+    public static final String R_RETRY = "RETRY";
 }

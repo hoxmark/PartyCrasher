@@ -30,9 +30,10 @@ public class GreetingServer extends Thread {
 
     public void run() {
         Logger.logString("Server running");
+        Socket client = null;
         while (true) {
             try {
-                Socket client = serverSocket.accept();
+                client = serverSocket.accept();
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 String line = in.readLine();
                 String[] lines = line.split("\\s+");
@@ -57,8 +58,15 @@ public class GreetingServer extends Thread {
                 client.close();
 
             } catch (Exception e) {
-                /* Send RETRY to client here  */
                 Logger.logException(e);
+                if(client != null) {
+                    try {
+                        PrintStream out = new PrintStream(client.getOutputStream(), true);
+                        out.println(Config.R_RETRY);
+                    } catch (IOException e1) {
+                        Logger.logException(e1);
+                    }
+                }
             }
         }
     }
@@ -253,7 +261,7 @@ public class GreetingServer extends Thread {
     }
 
     public static void main(String[] args) {
-        int port = 5003;//Integer.parseInt(args[0]);
+        int port = 5000;//Integer.parseInt(args[0]);
         try {
             Thread t = new GreetingServer(port);
             t.start();
