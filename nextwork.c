@@ -1,3 +1,5 @@
+#include "clique-count.c"
+#include "clique-count-extend.c"
 #include <arpa/inet.h>
 #include <dirent.h>
 #include <errno.h>
@@ -13,7 +15,6 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "clique-count.c"
 
 #define CHUNK_SIZE 512
 
@@ -34,12 +35,12 @@ int server_port, update_interval;
 struct PartyState {
     int width;
     int clique_count;
-    int *g;
+    int* g;
     int num_calculations;
 };
 
-struct PartyState *currentState;
-struct PartyState *bestState;
+struct PartyState* currentState;
+struct PartyState* bestState;
 
 void print_counterexample(int* g, int m) {
     int i, j;
@@ -90,12 +91,14 @@ void get_next_work(char* alg_name) {
     if (server_reply[0] != 'C') {
         reset_state();
         char m_string[600000];
-        sscanf(server_reply, "%d %d %s", &currentState->width, &currentState->clique_count, m_string);
+        sscanf(server_reply, "%d %d %s", &currentState->width,
+               &currentState->clique_count, m_string);
         printf("************************ We got a new work item: %d - %d "
                "************************\n",
                currentState->width, currentState->clique_count);
 
-        currentState->g = (int*)malloc(currentState->width * currentState->width * sizeof(int));
+        currentState->g = (int*)malloc(currentState->width *
+                                       currentState->width * sizeof(int));
 
         for (i = 0; i < currentState->width * currentState->width; i++) {
             currentState->g[i] = m_string[i] - '0';
@@ -133,18 +136,21 @@ int build_socket() {
     return sock;
 }
 
-bool send_all(int socket, char* alg_name, int* buffer, size_t length) {
+void send_counterexample(char* alg_name, int* buffer, int m) {
+    int length = m * m;
     char message_head[40];
-    sprintf(message_head, "PostExample %s %d %d %d ", alg_name, bestState->width,
-            bestState->clique_count, bestState->num_calculations);
-    // printf("Message head: %s \n", message_head);
+    sprintf(message_head, "PostExample %s %d %d %d ", alg_name,
+            bestState->width, bestState->clique_count,
+            bestState->num_calculations);
 
+    // Copy the contents of the int array to our send body buffer
     char message_body[length];
     int i;
     for (i = 0; i < length; i++) {
         sprintf(&message_body[i], "%d", buffer[i]);
     }
 
+    // WHole message we will send
     char total_message[strlen(message_head) + length];
 
     for (i = 0; i < strlen(message_head); i++) {
@@ -156,14 +162,11 @@ bool send_all(int socket, char* alg_name, int* buffer, size_t length) {
     }
 
     printf("%s\n", message_head);
-    send(socket, total_message, strlen(total_message), 0);
 
-    return true;
-}
-
-void send_counterexample(char* alg_name, int* g, int m) {
     int sock = build_socket();
-    send_all(sock, alg_name, bestState->g, bestState->width * bestState->width);
+    send(sock, total_message, strlen(total_message), 0);
+
+    // Server has taken our calculations into account - reset counter
     bestState->num_calculations = 0;
     close(sock);
 }
@@ -178,14 +181,31 @@ void flip_entry(int* matrix, int row, int column, int m) {
 void update_best_clique() {
     free(bestState->g);
     bestState->g = NULL;
-    bestState->g = (int*)malloc(currentState->width * currentState->width * sizeof(int));
+    bestState->g =
+        (int*)malloc(currentState->width * currentState->width * sizeof(int));
     int i;
     for (i = 0; i < currentState->width * currentState->width; i++) {
         bestState->g[i] = currentState->g[i];
     }
     bestState->width = currentState->width;
     bestState->clique_count = currentState->clique_count;
-    printf("Best clique is now %d - %d \n", bestState->width, bestState->clique_count);
+    printf("Best clique is now %d - %d \n", bestState->width,
+           bestState->clique_count);
+}
+
+void update_current_clique() {
+    free(currentState->g);
+    currentState->g = NULL;
+    currentState->g =
+        (int*)malloc(bestState->width * bestState->width * sizeof(int));
+    int i;
+    for (i = 0; i < bestState->width * bestState->width; i++) {
+        currentState->g[i] = bestState->g[i];
+    }
+    currentState->width = bestState->width;
+    currentState->clique_count = bestState->clique_count;
+    printf("Current clique is now %d - %d \n", currentState->width,
+           currentState->clique_count);
 }
 
 void reset_state() {
@@ -218,14 +238,16 @@ void best_clique() {
 
         flip_entry(currentState->g, row, column, currentState->width);
         currentState->clique_count = CliqueCount(currentState->g, currentState->width);
-        bestState->num_calculations++;
-        printf("Number of cliques at %d: %d - best is %d\n", currentState->width, currentState->clique_count,
+        bestState->num_calculations++
+        ;
+        printf("Number of cliques at %d: %d - best is %d\n",
+               currentState->width, currentState->clique_count,
                bestState->clique_count);
 
-        if (currentState->clique_count < bestState->clique_count) {
+        if (currentState->clique_count <= bestState->clique_count) {
             update_best_clique();
-        } else {
-            flip_entry(currentState->g, row, column, currentState->width);
+        } else if (currentState->clique_count > bestState->clique_count) {
+            update_current_clique();
         }
 
         if (currentState->clique_count == 0) {
@@ -237,44 +259,45 @@ void best_clique() {
                        1e-6 * (now.tv_usec - begin.tv_usec);
             if (timediff > update_interval) {
                 gettimeofday(&begin, NULL);
-                send_counterexample(alg_name, currentState->g, currentState->width);
+                send_counterexample(alg_name, currentState->g,
+                                    currentState->width);
                 get_next_work(alg_name);
             }
         }
     }
 }
 
-void end_flip(int number_of_bits_request) {
+void end_flip(int num_flips) {
     char* alg_name = "EndFlip";
     double timediff;
     struct timeval begin, now;
     gettimeofday(&begin, NULL);
 
     reset_state();
-
     get_next_work(alg_name);
 
     int i;
     while (1) {
         int row, column;
-        int number_of_bits = number_of_bits_request;
 
-        for (i = 0; i < number_of_bits; i++) {
-            row = random_int(0, currentState->width);
-            column = currentState->width - 1;
+        for (i = 0; i < num_flips; i++) {
+            row = 0;
+            column = random_int(0, currentState->width);
             flip_entry(currentState->g, row, column, currentState->width);
         }
 
-        currentState->clique_count = CliqueCount(currentState->g, currentState->width);
+        currentState->clique_count =
+            CliqueCountExtend(currentState->g, currentState->width);
         bestState->num_calculations++;
 
-        printf("Number of cliques at %d: %d - best is %d\n", currentState->width, currentState->clique_count,
+        printf("Number of cliques at %d: %d - best is %d\n",
+               currentState->width, currentState->clique_count,
                bestState->clique_count);
 
-        if (currentState->clique_count < bestState->clique_count) {
+        if (currentState->clique_count <= bestState->clique_count) {
             update_best_clique();
         } else {
-            flip_entry(currentState->g, row, column, currentState->width);
+            update_current_clique();
         }
 
         if (currentState->clique_count == 0) {
@@ -286,7 +309,8 @@ void end_flip(int number_of_bits_request) {
                        1e-6 * (now.tv_usec - begin.tv_usec);
             if (timediff > update_interval) {
                 gettimeofday(&begin, NULL);
-                send_counterexample(alg_name, currentState->g, currentState->width);
+                send_counterexample(alg_name, currentState->g,
+                                    currentState->width);
                 get_next_work(alg_name);
             }
         }
@@ -294,7 +318,7 @@ void end_flip(int number_of_bits_request) {
 }
 
 int main(int argc, char** argv) {
-    update_interval = 100;
+    update_interval = 15;
 
     // Initialize structs
     struct PartyState standard, standard2;
@@ -302,8 +326,8 @@ int main(int argc, char** argv) {
     bestState = &standard2;
 
     // Allocate to one int to be able to free it the first time
-    currentState->g = (int *) malloc(sizeof(int));
-    bestState->g = (int *) malloc(sizeof(int));
+    currentState->g = (int*)malloc(sizeof(int));
+    bestState->g = (int*)malloc(sizeof(int));
 
     if (argc != 5)
         printf("Wrong number of arguments");
@@ -312,7 +336,7 @@ int main(int argc, char** argv) {
         server_port = atoi(argv[2]);
         int alg_type = atoi(argv[3]);
         int arg = atoi(argv[4]);
-        //TODO make a case 1
+        // TODO make a case 1
         switch (alg_type) {
         case 2:
             best_clique();

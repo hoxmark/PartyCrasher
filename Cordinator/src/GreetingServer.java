@@ -41,7 +41,7 @@ public class GreetingServer extends Thread {
         try {
             generateNewWidth();
         } catch (Exception e) {
-            System.out.print("nei");
+            Logger.logException(e);
         }
     }
 
@@ -64,7 +64,7 @@ public class GreetingServer extends Thread {
                     try {
                         getNextWork(client, lines[1], lines[2], lines[3]);
                     } catch (Exception e) {
-                        System.out.print("ERROR" + e);
+                        Logger.logException(e);
                     }
                     break;
 
@@ -74,7 +74,7 @@ public class GreetingServer extends Thread {
                 client.close();
 
             } catch (Exception e) {
-                Logger.logError(e);
+                Logger.logException(e);
             }
         }
     }
@@ -96,18 +96,18 @@ public class GreetingServer extends Thread {
 
         DAO.updateCalculationCount(alg, Integer.parseInt(width), Integer.parseInt(calculations));
 
-        int m = Integer.parseInt(width);
-        int cliqueCount = Integer.parseInt(clientClique);
+        int clientWidth = Integer.parseInt(width);
+        int clientCliqueCount = Integer.parseInt(clientClique);
 
-        if (cliqueCount == 0 && m == bestClique.getWidth()) {
+        if (clientCliqueCount == 0 && clientWidth == bestClique.getWidth()) {
             Logger.logNewCounterExample(alg, width);
 
-            File file = new File("../../counterexamples/" + m + ".txt");
+            File file = new File("../../counterexamples/" + clientWidth + ".txt");
             BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-            writer.write(m + " 0 \n");
+            writer.write(clientWidth + " 0 \n");
 
-            for (int i = 0; i < m * m; i++) {
-                if (i % m == 0 && i != 0)
+            for (int i = 0; i < clientWidth * clientWidth; i++) {
+                if (i % clientWidth == 0 && i != 0)
                     writer.write("\n");
                 writer.write(s.charAt(i) + " ");
             }
@@ -116,20 +116,21 @@ public class GreetingServer extends Thread {
                 generateNewWidth();
 
             } catch (Exception e) {
-                //TODO: handle exception
+                Logger.logException(e);
             }
 
         } else {
             switch (alg) {
             case "BestClique":
-                if ((m >= bestClique.getWidth()) && (cliqueCount < bestClique.getCliqueCount())) {
-                    bestClique = new PartyState(m, cliqueCount, s);
+                if ((clientWidth >= bestClique.getWidth()) && (clientCliqueCount < bestClique.getCliqueCount())) {
+                    bestClique = new PartyState(clientWidth, clientCliqueCount, s);
                     Logger.logBetterCliqueCount(alg, bestClique.getCliqueCount());
                 }
                 break;
             case "EndFlip":
-                if ((m >= bestEndFlipClique.getWidth()) && (cliqueCount < bestEndFlipClique.getCliqueCount())) {
-                    bestEndFlipClique = new PartyState(m, cliqueCount, s);
+                if ((clientWidth >= bestEndFlipClique.getWidth())
+                        && (clientCliqueCount < bestEndFlipClique.getCliqueCount())) {
+                    bestEndFlipClique = new PartyState(clientWidth, clientCliqueCount, s);
                     Logger.logBetterCliqueCount(alg, bestEndFlipClique.getCliqueCount());
                 }
                 break;
@@ -149,14 +150,17 @@ public class GreetingServer extends Thread {
         String file = fileToString(best);
         String oldBody = file.substring(file.indexOf('\n') + 1).replace(" ", "").replace("\n", "");
         String newBody = "";
-        for (int i = 0; i < m * m; i++) {
-            newBody += oldBody.charAt(i);
-            if ((i + 1) % m == 0)
-                newBody += "0";
-        }
+
         for (int i = 0; i < m + 1; i++) {
             newBody += "0";
         }
+
+        for (int i = 0; i < m * m; i++) {
+            if (i % m == 0)
+                newBody += "0";
+            newBody += oldBody.charAt(i);
+        }
+
         // System.out.print(newBody);
         bestClique.setBody(newBody);
         bestEndFlipClique.setBody(newBody);
@@ -219,12 +223,12 @@ public class GreetingServer extends Thread {
     }
 
     public static void main(String[] args) {
-        int port = 5004;//Integer.parseInt(args[0]);
+        int port = 5000;//Integer.parseInt(args[0]);
         try {
             Thread t = new GreetingServer(port);
             t.start();
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.logException(e);
         }
     }
 }
@@ -295,8 +299,11 @@ class Logger {
         printString(s + "\n");
     }
 
-    public static void logError(Exception e) {
-        System.err.println(e.getClass().getName() + ": " + e.getMessage());
+    public static void logException(Exception e) {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = new Date();
+        System.err.println(
+                String.format("%-15s %-100s", dateFormat.format(date), e.getClass().getName() + ": " + e.getMessage()));
     }
 
     private static void printString(String s) {
@@ -363,7 +370,7 @@ class DAO {
                 System.out.println(obj);
             }
         } catch (Exception e) {
-            Logger.logError(e);
+            Logger.logException(e);
         }
     }
 }
