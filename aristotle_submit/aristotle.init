@@ -12,8 +12,8 @@ ssh -i /Users/hoxmark/Downloads/hoxmark.pem ubuntu@169.231.235.158 << EOF
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 60 --slave /usr/bin/g++ g++ /usr/bin/g++-6 && \
         sudo apt-get install gcc-4.8 g++-4.8 -y && \
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 60 --slave /usr/bin/g++ g++ /usr/bin/g++-4.8;
-        # wget https://raw.githubusercontent.com/hoxmark/PartyCrasher/master/clique-count.c?token=AFLKRyMWWp4cMqRWIFqRZzj3L9idLv8Yks5ZInf0wA%3D%3D
-        # mv clique-count.c?token=AFLKRyMWWp4cMqRWIFqRZzj3L9idLv8Yks5ZInf0wA%3D%3D clique-count.c
+        wget https://raw.githubusercontent.com/hoxmark/PartyCrasher/master/clique-count.c?token=AFLKRyMWWp4cMqRWIFqRZzj3L9idLv8Yks5ZInf0wA%3D%3D
+        mv clique-count.c?token=AFLKRyMWWp4cMqRWIFqRZzj3L9idLv8Yks5ZInf0wA%3D%3D clique-count.c
     fi    
 EOF
 
@@ -29,8 +29,8 @@ ssh -i /Users/hoxmark/Downloads/hoxmark.pem ubuntu@169.231.235.188 << EOF
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 60 --slave /usr/bin/g++ g++ /usr/bin/g++-6 && \
         sudo apt-get install gcc-4.8 g++-4.8 -y && \
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 60 --slave /usr/bin/g++ g++ /usr/bin/g++-4.8;
-        # wget https://raw.githubusercontent.com/hoxmark/PartyCrasher/master/clique-count.c?token=AFLKRyMWWp4cMqRWIFqRZzj3L9idLv8Yks5ZInf0wA%3D%3D
-        # mv clique-count.c?token=AFLKRyMWWp4cMqRWIFqRZzj3L9idLv8Yks5ZInf0wA%3D%3D clique-count.c
+        wget https://raw.githubusercontent.com/hoxmark/PartyCrasher/master/clique-count.c?token=AFLKRyMWWp4cMqRWIFqRZzj3L9idLv8Yks5ZInf0wA%3D%3D
+        mv clique-count.c?token=AFLKRyMWWp4cMqRWIFqRZzj3L9idLv8Yks5ZInf0wA%3D%3D clique-count.c
     fi     
 EOF
 

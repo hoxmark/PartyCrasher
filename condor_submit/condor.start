@@ -1,6 +1,6 @@
 #!/bin/bash
 
-gcc ../nextwork.c -o ../client.o 
+gcc ./../nextwork.c -o ./../client.o 
 condor_submit /home/cs293b-2/PartyCrasher/condor_submit/endFlip1.submit 
 condor_submit /home/cs293b-2/PartyCrasher/condor_submit/endFlip4.submit 
 condor_submit /home/cs293b-2/PartyCrasher/condor_submit/endFlip8.submit 

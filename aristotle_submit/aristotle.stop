@@ -2,18 +2,18 @@
 
 
 ssh -i /Users/hoxmark/Downloads/hoxmark.pem ubuntu@169.231.235.158 << EOF
-    killall a.out
+    killall nextwork.o
 EOF
 
 ssh -i /Users/hoxmark/Downloads/hoxmark.pem ubuntu@169.231.235.188 << EOF
-    killall a.out
+    killall nextwork.o
 EOF
 
 ssh -i /Users/hoxmark/Downloads/hoxmark.pem ubuntu@169.231.235.133 << EOF
-    killall a.out
+    killall nextwork.o
 EOF
 
 ssh -i /Users/hoxmark/Downloads/hoxmark.pem ubuntu@169.231.235.175 << EOF
-    killall a.out
+    killall nextwork.o
 EOF
 
