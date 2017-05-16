@@ -1,42 +1,25 @@
-
-// File Name GreetingServer.java
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.text.Normalizer.Form;
 import java.nio.charset.*;
-import java.lang.Process.*;
-import java.util.Date;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Map;
-import java.util.HashMap;
-
-import org.omg.CORBA.PRIVATE_MEMBER;
-
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.MongoClient;
-import static com.mongodb.client.model.Filters.*;
-
 import java.io.*;
 import java.util.Collections;
 
 public class GreetingServer extends Thread {
     private ServerSocket serverSocket;
-    private String R_CONTINE = "CONTINUE";
     private PartyState bestClique;
     private PartyState bestEndFlipClique;
+    private PartyState annealingState;
+    private boolean annealing = false;
+    private int annealingCalculations = 0;
 
     public GreetingServer(int port) throws IOException {
         serverSocket = new ServerSocket(port);
         bestClique = new PartyState(0, Integer.MAX_VALUE, "");
         bestEndFlipClique = new PartyState(0, Integer.MAX_VALUE, "");
+        annealingState = new PartyState(0, Integer.MAX_VALUE, "");
 
         try {
             generateNewWidth();
@@ -47,19 +30,20 @@ public class GreetingServer extends Thread {
 
     public void run() {
         Logger.logString("Server running");
+        Socket client = null;
         while (true) {
             try {
-                Socket client = serverSocket.accept();
+                client = serverSocket.accept();
                 BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 String line = in.readLine();
                 String[] lines = line.split("\\s+");
 
                 switch (lines[0]) {
-                case "PostExample":
+                case Config.POSTEXAMPLE:
                     //PostExample alg bredde, clic, calcs, state  
                     postExample(client, lines[1], lines[2], lines[3], lines[4], lines[5]);
                     break;
-                case "GetNextWork":
+                case Config.GET_NEXT_WORK:
                     //PostExample alg bredde 
                     try {
                         getNextWork(client, lines[1], lines[2], lines[3]);
@@ -75,6 +59,14 @@ public class GreetingServer extends Thread {
 
             } catch (Exception e) {
                 Logger.logException(e);
+                if(client != null) {
+                    try {
+                        PrintStream out = new PrintStream(client.getOutputStream(), true);
+                        out.println(Config.R_RETRY);
+                    } catch (IOException e1) {
+                        Logger.logException(e1);
+                    }
+                }
             }
         }
     }
@@ -94,60 +86,97 @@ public class GreetingServer extends Thread {
         Logger.logEvent("POST EXAMPLE");
         Logger.logClient(client.getInetAddress().toString(), alg, width, clientClique);
 
-        DAO.updateCalculationCount(alg, Integer.parseInt(width), Integer.parseInt(calculations));
-
         int clientWidth = Integer.parseInt(width);
         int clientCliqueCount = Integer.parseInt(clientClique);
+        int clientCalculations = Integer.parseInt(calculations);
 
-        if (clientCliqueCount == 0 && clientWidth == bestClique.getWidth()) {
-            Logger.logNewCounterExample(alg, width);
+        DAO.updateCalculationCount(alg, Integer.parseInt(width), clientCalculations);
 
-            File file = new File("../../counterexamples/" + clientWidth + ".txt");
-            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-            writer.write(clientWidth + " 0 \n");
+        /* Add the new calculations done by the client if we are not annealing */
+        if(clientWidth == this.bestEndFlipClique.getWidth() && !this.annealing) this.annealingCalculations += clientCalculations;
 
-            for (int i = 0; i < clientWidth * clientWidth; i++) {
-                if (i % clientWidth == 0 && i != 0)
-                    writer.write("\n");
-                writer.write(s.charAt(i) + " ");
-            }
-            writer.flush();
-            try {
-                generateNewWidth();
+        /* If the new count puts us over the annealing threshold, anneal for some time */
+        if (clientWidth == getUniversalBestClique().getWidth() && this.annealingCalculations > Config.ANNEALING_THRESHOLD && !this.annealing) {
+            Logger.logEnterState("Annealing");
+            this.annealing = true;
+            this.generateNewWidth();
 
-            } catch (Exception e) {
-                Logger.logException(e);
-            }
-
-        } else {
-            switch (alg) {
-            case "BestClique":
-                if ((clientWidth >= bestClique.getWidth()) && (clientCliqueCount < bestClique.getCliqueCount())) {
-                    bestClique = new PartyState(clientWidth, clientCliqueCount, s);
-                    Logger.logBetterCliqueCount(alg, bestClique.getCliqueCount());
+            // Launch a thread that sets annealing to false after a timeout
+            new Thread(() -> {
+                try {
+                    Thread.sleep(Config.ANNEALING_TIMEOUT_MS);
+                } catch (InterruptedException e) {
+                    Logger.logException(e);
                 }
-                break;
-            case "EndFlip":
-                if ((clientWidth >= bestEndFlipClique.getWidth())
-                        && (clientCliqueCount < bestEndFlipClique.getCliqueCount())) {
-                    bestEndFlipClique = new PartyState(clientWidth, clientCliqueCount, s);
-                    Logger.logBetterCliqueCount(alg, bestEndFlipClique.getCliqueCount());
+                Logger.logEnterState("Default");
+                annealing = false;
+                this.annealingCalculations = 0;
+            }).start();
+        }
+        // Only process the posted state if we're not in an annealing state
+        if (!this.annealing) {
+            if (clientCliqueCount == 0 && clientWidth == bestClique.getWidth()) {
+                this.annealingCalculations = 0;
+                Logger.logNewCounterExample(alg, width);
+
+                File file = new File("../../counterexamples/" + clientWidth + ".txt");
+                BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+                writer.write(clientWidth + " 0 \n");
+
+                for (int i = 0; i < clientWidth * clientWidth; i++) {
+                    if (i % clientWidth == 0 && i != 0)
+                        writer.write("\n");
+                    writer.write(s.charAt(i) + " ");
                 }
-                break;
+                writer.flush();
+                try {
+                    generateNewWidth();
+
+                } catch (Exception e) {
+                    Logger.logException(e);
+                }
+
+            } else {
+                switch (alg) {
+                case Config.BESTLICUQE_ALGORITHM_NAME:
+                    if ((clientWidth >= bestClique.getWidth()) && (clientCliqueCount < bestClique.getCliqueCount())) {
+                        this.annealingCalculations = 0;
+                        bestClique = new PartyState(clientWidth, clientCliqueCount, s);
+                        Logger.logBetterCliqueCount(alg, bestClique.getCliqueCount());
+                    }
+                    break;
+                case Config.ENDFLIP_ALGORITHM_NAME:
+                    if ((clientWidth >= bestEndFlipClique.getWidth())
+                            && (clientCliqueCount < bestEndFlipClique.getCliqueCount())) {
+                        this.annealingCalculations = 0;
+                        bestEndFlipClique = new PartyState(clientWidth, clientCliqueCount, s);
+                        Logger.logBetterCliqueCount(alg, bestEndFlipClique.getCliqueCount());
+                    }
+                    break;
+                }
             }
         }
     }
 
-    void generateNewWidth() throws Exception {
+    void generateNewWidth() {
         String best = findBestCounterExample();
         int m = Integer.parseInt(best);
+
         bestClique.setWidth(m + 1);
         bestClique.setCliqueCount(Integer.MAX_VALUE);
 
         bestEndFlipClique.setWidth(m + 1);
         bestEndFlipClique.setCliqueCount(Integer.MAX_VALUE);
 
-        String file = fileToString(best);
+        annealingState.setWidth(m + 1);
+        annealingState.setCliqueCount(Integer.MAX_VALUE);
+
+        String file = null;
+        try {
+            file = fileToString(best);
+        } catch (Exception e) {
+            Logger.logException(e);
+        }
         String oldBody = file.substring(file.indexOf('\n') + 1).replace(" ", "").replace("\n", "");
         String newBody = "";
 
@@ -164,6 +193,7 @@ public class GreetingServer extends Thread {
         // System.out.print(newBody);
         bestClique.setBody(newBody);
         bestEndFlipClique.setBody(newBody);
+        annealingState.setBody(newBody);
     }
 
     PartyState getUniversalBestClique() {
@@ -178,31 +208,39 @@ public class GreetingServer extends Thread {
         int clientCliqueCount = Integer.parseInt(clientCliqueString);
 
         PrintStream out = new PrintStream(client.getOutputStream(), true);
-        switch (alg) {
-        case "BestClique":
-            PartyState bestState = getUniversalBestClique();
-            if (clientWidth == bestState.getWidth() && clientCliqueCount <= bestState.getCliqueCount()) {
-                out.print(R_CONTINE);
-                Logger.logReturnContinue();
-            } else {
-                Logger.logReturnClique(bestState.getWidth(), bestState.getCliqueCount());
-                out.print(bestState.getWidth() + " " + bestState.getCliqueCount() + " " + bestState.getBody());
-                client.close();
-            }
-            break;
 
-        case "EndFlip":
-            if (clientWidth == bestEndFlipClique.getWidth()
-                    && clientCliqueCount <= bestEndFlipClique.getCliqueCount()) {
-                out.print(R_CONTINE);
-                Logger.logReturnContinue();
-            } else {
-                out.print(bestEndFlipClique.getWidth() + " " + bestEndFlipClique.getCliqueCount() + " "
-                        + bestEndFlipClique.getBody());
-                Logger.logReturnClique(bestEndFlipClique.getWidth(), bestEndFlipClique.getCliqueCount());
-                client.close();
+        // If we're annealing - return the basis again
+        if (this.annealing) {
+            Logger.logReturnAnnealingState();
+            out.print(this.annealingState.getWidth() + " " + this.annealingState.getCliqueCount() + " "
+                    + this.annealingState.getBody());
+        } else {
+            switch (alg) {
+            case Config.BESTLICUQE_ALGORITHM_NAME:
+                PartyState bestState = getUniversalBestClique();
+                if (clientWidth == bestState.getWidth() && clientCliqueCount <= bestState.getCliqueCount()) {
+                    out.print(Config.R_CONTINE);
+                    Logger.logReturnContinue();
+                } else {
+                    Logger.logReturnClique(bestState.getWidth(), bestState.getCliqueCount());
+                    out.print(bestState.getWidth() + " " + bestState.getCliqueCount() + " " + bestState.getBody());
+                    client.close();
+                }
+                break;
+
+            case Config.ENDFLIP_ALGORITHM_NAME:
+                if (clientWidth == bestEndFlipClique.getWidth()
+                        && clientCliqueCount <= bestEndFlipClique.getCliqueCount()) {
+                    out.print(Config.R_CONTINE);
+                    Logger.logReturnContinue();
+                } else {
+                    out.print(bestEndFlipClique.getWidth() + " " + bestEndFlipClique.getCliqueCount() + " "
+                            + bestEndFlipClique.getBody());
+                    Logger.logReturnClique(bestEndFlipClique.getWidth(), bestEndFlipClique.getCliqueCount());
+                    client.close();
+                }
+                break;
             }
-            break;
         }
     }
 
@@ -269,108 +307,3 @@ class PartyState {
     }
 }
 
-class Logger {
-    public static void logEvent(String eventName) {
-        printString("**************************** " + eventName + " ****************************");
-    }
-
-    public static void logClient(String address, String algorithm, String width, String cliqueCount) {
-        printString(String.format("%-30s %-30s %-30s %-30s", "Client: " + address, "Alg: " + algorithm,
-                "Problem: " + width, "Best Clique: " + cliqueCount));
-    }
-
-    public static void logReturnContinue() {
-        printString("RETURNING: CONTINUE\n");
-    }
-
-    public static void logReturnClique(int width, int cliqueCount) {
-        printString(String.format("%-10s %-5s %-5s\n", "RETURNING:", width, cliqueCount));
-    }
-
-    public static void logBetterCliqueCount(String algorithm, int cliqueCount) {
-        printString(String.format("%-10s %-10s", algorithm + " better count", cliqueCount));
-    }
-
-    public static void logNewCounterExample(String algorithm, String width) {
-        printString(">>>>>>>>>>>> " + algorithm + " FOUND NEW COUNTER EXAMPLE AT " + width + "<<<<<<<<<<<<<<<<<<");
-    }
-
-    public static void logString(String s) {
-        printString(s + "\n");
-    }
-
-    public static void logException(Exception e) {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        Date date = new Date();
-        System.err.println(
-                String.format("%-15s %-100s", dateFormat.format(date), e.getClass().getName() + ": " + e.getMessage()));
-    }
-
-    private static void printString(String s) {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        Date date = new Date();
-        System.out.println(String.format("%-15s %-50s", dateFormat.format(date), s));
-    }
-}
-
-class DAO {
-    static MongoClient mongoClient = new MongoClient("localhost", 27017);
-
-    public static void updateCalculationCount(String algorithm, int width, int calculations) {
-        try {
-            // To connect to mongodb server
-
-            // Now connect to your databases
-            DB db = mongoClient.getDB("Calculations");
-            DBCollection collection = db.getCollection("Calculations");
-
-            int existing = 0;
-            BasicDBObject searchQuery = new BasicDBObject();
-            searchQuery.put("width", width);
-            DBCursor cursor = collection.find(searchQuery);
-            boolean found = false;
-
-            Map<String, Integer> newMap = new HashMap<>();
-
-            // Update if we have an existing entry for this width 
-            if (cursor.hasNext()) {
-                BasicDBObject ob = (BasicDBObject) cursor.next();
-                if (ob.get("calculations") != null) {
-                    newMap = (HashMap) ob.get("calculations");
-                    // If entry for this algorithm, get existing and update it 
-                    if (newMap.get(algorithm) != null) {
-                        existing = newMap.get(algorithm);
-                        newMap.put(algorithm, existing + calculations);
-                    } else {
-                        // We don't have an entry for this algorithm 
-                        newMap.put(algorithm, calculations);
-                    }
-                }
-
-                // Update the document
-                BasicDBObject newDocument = new BasicDBObject();
-                newDocument.put("calculations", newMap);
-
-                BasicDBObject updateObj = new BasicDBObject();
-                updateObj.put("$set", newDocument);
-                collection.update(searchQuery, updateObj);
-            } else {
-                // We don't have an entry for this width. create it 
-                BasicDBObject document = new BasicDBObject();
-                document.put("width", width);
-                Map<String, Integer> calcs = new HashMap<>();
-                calcs.put(algorithm, calculations);
-                document.put("calculations", calcs);
-                collection.insert(document);
-            }
-
-            DBCursor cursor2 = collection.find();
-            while (cursor2.hasNext()) {
-                BasicDBObject obj = (BasicDBObject) cursor2.next();
-                System.out.println(obj);
-            }
-        } catch (Exception e) {
-            Logger.logException(e);
-        }
-    }
-}
