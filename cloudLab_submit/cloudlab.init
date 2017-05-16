@@ -1,0 +1,7 @@
+#!/bin/bash
+
+while read name
+do
+     ssh -i /Users/hoxmark/Downloads/\'cloudlab.pem\'.txt $name 'bash -s' < ./runOnCloudlab.sh       
+done < ./cloudlab.servers
+

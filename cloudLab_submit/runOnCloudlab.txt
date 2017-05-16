@@ -1,0 +1,21 @@
+
+ssh -i /Users/hoxmark/Downloads/\'cloudlab.pem\'.txt ${ARRAY[$i]} << EOF
+    wget https://raw.githubusercontent.com/hoxmark/PartyCrasher/master/clique-count.c?token=AFLKRyMWWp4cMqRWIFqRZzj3L9idLv8Yks5ZInf0wA%3D%3D
+    mv clique-count.c?token=AFLKRyMWWp4cMqRWIFqRZzj3L9idLv8Yks5ZInf0wA%3D%3D clique-count.c
+
+    wget https://raw.githubusercontent.com/hoxmark/PartyCrasher/master/nextwork.c?token=AFLKR9W-k5uahnJmC-VzsdTJXCCXhma4ks5ZI6kswA%3D%3D
+    mv nextwork.c?token=AFLKR9W-k5uahnJmC-VzsdTJXCCXhma4ks5ZI6kswA%3D%3D nextwork.c
+
+EOF
+
+
+
+ARRAY=(
+    'PartyCra@c220g2-011103.wisc.cloudlab.us'
+    'PartyCra@c220g2-011001.wisc.cloudlab.us' 
+    'PartyCra@c220g2-011116.wisc.cloudlab.us'
+    'PartyCra@c220g2-011111.wisc.cloudlab.us'
+    'PartyCra@c220g2-011003.wisc.cloudlab.us'
+    'PartyCra@c220g2-011007.wisc.cloudlab.us'
+    'PartyCra@c220g2-011006.wisc.cloudlab.us'
+    'PartyCra@c220g2-011002.wisc.cloudlab.us')
