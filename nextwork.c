@@ -105,9 +105,17 @@ void get_next_work(char* alg_name) {
         }
 
         update_best_clique();
-    } else {
+    } else if( server_reply[0]== 'C') {
         printf("************************ SERVER REPLY: CONTINUE "
-               "************************\n");
+               "************************\n");            
+    } else if( server_reply[0]== 'R'){
+        printf("************************ SERVER REPLY: RETRY "
+               "************************\n Sleeping for 20 sec\n");  
+        sleep(20);
+        get_next_work(alg_name);
+    } else {
+        printf("************************ SERVER REPLY: UNKNOWN "
+               "************************\n"); 
     }
 }
 
