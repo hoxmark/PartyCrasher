@@ -102,15 +102,19 @@ public class GreetingServer extends Thread {
             this.generateNewWidth();
 
             // Launch a thread that sets annealing to false after a timeout
-            new Thread(() -> {
-                try {
-                    Thread.sleep(Config.ANNEALING_TIMEOUT_MS);
-                } catch (InterruptedException e) {
-                    Logger.logException(e);
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(Config.ANNEALING_TIMEOUT_MS);
+                    } catch (InterruptedException e) {
+                        Logger.logException(e);
+                    }
+                    Logger.logEnterState("Default");
+                    annealing = false;
+                    annealingCalculations = 0;
                 }
-                Logger.logEnterState("Default");
-                annealing = false;
-                this.annealingCalculations = 0;
             }).start();
         }
         // Only process the posted state if we're not in an annealing state
