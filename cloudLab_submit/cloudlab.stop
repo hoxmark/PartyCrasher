@@ -2,6 +2,6 @@
 
 while read name
 do
-     ssh -i /Users/hoxmark/Downloads/\'cloudlab.pem\'.txt $name 'bash -s' < ./runOnCloudlab.stop.sh      
-done < ./cloudlab.servers
+     ssh -i /Users/hoxmark/Downloads/\'cloudlab.pem\'.txt $name 'bash -s' < /Users/hoxmark/Developer/Fag/Cloud/PartyCrasher/cloudLab_submit//runOnCloudlab.stop.sh      
+done < /Users/hoxmark/Developer/Fag/Cloud/PartyCrasher/cloudLab_submit/cloudlab.servers
 

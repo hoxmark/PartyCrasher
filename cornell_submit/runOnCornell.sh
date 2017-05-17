@@ -13,27 +13,45 @@ mv nextwork.c?token=AFLKR9W-k5uahnJmC-VzsdTJXCCXhma4ks5ZI6kswA%3D%3D nextwork.c
 
 gcc nextwork.c -o nextwork.o
 
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
-./nextwork.o 104.198.30.238 5004 3 1 &
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt & 
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+disown
+
+exit

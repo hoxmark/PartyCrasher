@@ -2,6 +2,6 @@
 
 while read name
 do
-     ssh -i /Users/hoxmark/Downloads/hoxmarkCornell.pem ubuntu@$name 'bash -s' < ./runOnCornell.sh       
-done < ./cornell.servers
+     ssh -i /Users/hoxmark/Downloads/hoxmarkCornell.pem ubuntu@$name 'bash -s' < /Users/hoxmark/Developer/Fag/Cloud/PartyCrasher/cornell_submit/runOnCornell.sh       
+done < /Users/hoxmark/Developer/Fag/Cloud/PartyCrasher/cornell_submit/cornell.servers
 
