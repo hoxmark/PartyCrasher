@@ -1,0 +1,7 @@
+#!/bin/bash
+
+while read name
+do
+     ssh -i /Users/hoxmark/Downloads/hoxmarkCornell.pem ubuntu@$name 'bash -s' < /Users/hoxmark/Developer/Fag/Cloud/PartyCrasher/cornell_submit/runOnCornell.stop.sh       
+done < /Users/hoxmark/Developer/Fag/Cloud/PartyCrasher/cornell_submit/cornell.servers
+
