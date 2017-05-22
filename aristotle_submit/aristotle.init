@@ -1,6 +1,15 @@
 #!/bin/bash
 
 ssh -i /Users/hoxmark/Downloads/hoxmark.pem ubuntu@169.231.235.158 << EOF
+    wget https://raw.githubusercontent.com/hoxmark/PartyCrasher/master/https://raw.githubusercontent.com/hoxmark/PartyCrasher/master/nextwork.c?token=AFLKR5CZyLervNA4jKIAyQwfcy8K_7jEks5ZLIETwA%3D%3D
+    mv https://raw.githubusercontent.com/hoxmark/PartyCrasher/master/nextwork.c?token=AFLKR5CZyLervNA4jKIAyQwfcy8K_7jEks5ZLIETwA%3D%3D clique-count.c
+
+    wget https://raw.githubusercontent.com/hoxmark/PartyCrasher/master/clique-count-extend.c?token=AFLKR4ap7cEJNzGLYiu1CU-gyqXcHnbpks5ZI8J5wA%3D%3D
+    mv clique-count-extend.c?token=AFLKR4ap7cEJNzGLYiu1CU-gyqXcHnbpks5ZI8J5wA%3D%3D clique-count-extend.c
+
+    wget https://raw.githubusercontent.com/hoxmark/PartyCrasher/master/nextwork.c?token=AFLKR9W-k5uahnJmC-VzsdTJXCCXhma4ks5ZI6kswA%3D%3D
+    mv nextwork.c?token=AFLKR9W-k5uahnJmC-VzsdTJXCCXhma4ks5ZI6kswA%3D%3D nextwork.c
+
     if ! [ -x "$(command -v gcc)" ]; then
         sudo apt-get update && \
         sudo apt-get install build-essential software-properties-common -y && \
