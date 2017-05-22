@@ -326,6 +326,7 @@ void end_flip(int num_flips) {
 }
 
 int main(int argc, char** argv) {
+    srand(getpid());
     update_interval = 50;
 
     // Initialize structs
