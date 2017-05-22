@@ -57,11 +57,6 @@ class DAO {
                 ret = calculations;
             }
 
-            DBCursor cursor2 = collection.find();
-            while (cursor2.hasNext()) {
-                BasicDBObject obj = (BasicDBObject) cursor2.next();
-                System.out.println(obj);
-            }
         } catch (Exception e) {
             Logger.logException(e);
         }

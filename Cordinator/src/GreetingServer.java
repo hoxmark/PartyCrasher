@@ -1,31 +1,58 @@
 import java.net.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.charset.*;
 import java.io.*;
-import java.util.Collections;
 
 public class GreetingServer extends Thread {
     private ServerSocket serverSocket;
+    private Map<String, Date> connectedServers;
+
     private PartyState bestClique;
     private PartyState bestEndFlipClique;
     private PartyState annealingState;
     private boolean annealing = false;
     private int annealingCalculations = 0;
 
-    public GreetingServer(int port) throws IOException {
-        serverSocket = new ServerSocket(port);
+    public GreetingServer(int port) {
+        try {
+            serverSocket = new ServerSocket(port);
+        } catch (IOException e) {
+            Logger.logException(e);
+        }
+        connectedServers = new HashMap<>();
         bestClique = new PartyState(0, Integer.MAX_VALUE, "");
         bestEndFlipClique = new PartyState(0, Integer.MAX_VALUE, "");
         annealingState = new PartyState(0, Integer.MAX_VALUE, "");
+
 
         try {
             generateNewWidth();
         } catch (Exception e) {
             Logger.logException(e);
         }
+
+
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                updateConnectedServersMap();
+            }
+        }, 0, Config.CLIENT_UPDATE_INTERVAL_SECONDS * 1000);
+    }
+
+    private void updateConnectedServersMap() {
+        Date now = new Date();
+        for (Iterator<Map.Entry<String, Date>> it = connectedServers.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<String, Date> entry = it.next();
+            long secondsSinceConnected = (now.getTime() - entry.getValue().getTime()) / 1000;
+            if (secondsSinceConnected > Config.CLIENT_UPDATE_INTERVAL_SECONDS) {
+                it.remove();
+            }
+        }
+        Logger.logString("Connected clients: " + connectedServers.size());
     }
 
     public void run() {
@@ -39,27 +66,23 @@ public class GreetingServer extends Thread {
                 String[] lines = line.split("\\s+");
 
                 switch (lines[0]) {
-                case Config.POSTEXAMPLE:
-                    //PostExample alg bredde, clic, calcs, state  
-                    postExample(client, lines[1], lines[2], lines[3], lines[4], lines[5]);
-                    break;
-                case Config.GET_NEXT_WORK:
-                    //PostExample alg bredde 
-                    try {
+                    case Config.POSTEXAMPLE:
+                        //PostExample alg bredde, clic, calcs, state
+                        postExample(client, lines[1], lines[2], lines[3], lines[4], lines[5]);
+                        break;
+                    case Config.GET_NEXT_WORK:
+                        //PostExample alg bredde
                         getNextWork(client, lines[1], lines[2], lines[3]);
-                    } catch (Exception e) {
-                        Logger.logException(e);
-                    }
-                    break;
+                        break;
 
-                default:
-                    System.out.println("Error: Default in switch");
+                    default:
+                        System.out.println("Error: Default in switch");
                 }
                 client.close();
 
             } catch (Exception e) {
                 Logger.logException(e);
-                if(client != null) {
+                if (client != null) {
                     try {
                         PrintStream out = new PrintStream(client.getOutputStream(), true);
                         out.println(Config.R_RETRY);
@@ -71,18 +94,22 @@ public class GreetingServer extends Thread {
         }
     }
 
-    String fileToString(String value) throws Exception {
+    String fileToString(String value) {
         String filename = ("../../counterexamples/" + value + ".txt");
         return readFile(filename, StandardCharsets.UTF_8);
     }
 
-    static String readFile(String path, Charset encoding) throws IOException {
-        byte[] encoded = Files.readAllBytes(Paths.get(path));
+    static String readFile(String path, Charset encoding) {
+        byte[] encoded = new byte[0];
+        try {
+            encoded = Files.readAllBytes(Paths.get(path));
+        } catch (IOException e) {
+            Logger.logException(e);
+        }
         return new String(encoded, encoding);
     }
 
-    void postExample(Socket client, String alg, String width, String clientClique, String calculations, String s)
-            throws IOException {
+    void postExample(Socket client, String alg, String width, String clientClique, String calculations, String s) {
         Logger.logEvent("POST EXAMPLE");
         Logger.logClient(client.getInetAddress().toString(), alg, width, clientClique);
 
@@ -93,7 +120,11 @@ public class GreetingServer extends Thread {
         DAO.updateCalculationCount(alg, Integer.parseInt(width), clientCalculations);
 
         /* Add the new calculations done by the client if we are not annealing */
-        if(clientWidth == this.bestEndFlipClique.getWidth() && !this.annealing) this.annealingCalculations += clientCalculations;
+        if (clientWidth == this.bestEndFlipClique.getWidth() && !this.annealing) {
+            this.annealingCalculations += clientCalculations;
+            double percentage = ((double) this.annealingCalculations / (double) Config.ANNEALING_THRESHOLD) * 100;
+            Logger.logString(String.format("Annealing: %d of %d - %.2f %%", this.annealingCalculations, Config.ANNEALING_THRESHOLD, percentage));
+        }
 
         /* If the new count puts us over the annealing threshold, anneal for some time */
         if (clientWidth == getUniversalBestClique().getWidth() && this.annealingCalculations > Config.ANNEALING_THRESHOLD && !this.annealing) {
@@ -118,13 +149,14 @@ public class GreetingServer extends Thread {
             }).start();
         }
         // Only process the posted state if we're not in an annealing state
-        if (!this.annealing) {
-            if (clientCliqueCount == 0 && clientWidth == bestClique.getWidth()) {
-                this.annealingCalculations = 0;
-                Logger.logNewCounterExample(alg, width);
 
-                File file = new File("../../counterexamples/" + clientWidth + ".txt");
-                BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+        if (clientCliqueCount == 0 && clientWidth == bestClique.getWidth()) {
+            Logger.logNewCounterExample(alg, width);
+
+            File file = new File("../../counterexamples/" + clientWidth + ".txt");
+            BufferedWriter writer = null;
+            try {
+                writer = new BufferedWriter(new FileWriter(file));
                 writer.write(clientWidth + " 0 \n");
 
                 for (int i = 0; i < clientWidth * clientWidth; i++) {
@@ -133,15 +165,19 @@ public class GreetingServer extends Thread {
                     writer.write(s.charAt(i) + " ");
                 }
                 writer.flush();
-                try {
-                    generateNewWidth();
+            } catch (IOException e) {
+                Logger.logException(e);
+            }
 
-                } catch (Exception e) {
-                    Logger.logException(e);
-                }
+            generateNewWidth();
 
-            } else {
-                switch (alg) {
+            this.annealingCalculations = 0;
+            this.annealing = false;
+
+        }
+
+        if (!this.annealing) {
+            switch (alg) {
                 case Config.BESTLICUQE_ALGORITHM_NAME:
                     if ((clientWidth >= bestClique.getWidth()) && (clientCliqueCount < bestClique.getCliqueCount())) {
                         this.annealingCalculations = 0;
@@ -157,10 +193,10 @@ public class GreetingServer extends Thread {
                         Logger.logBetterCliqueCount(alg, bestEndFlipClique.getCliqueCount());
                     }
                     break;
-                }
             }
         }
     }
+
 
     void generateNewWidth() {
         String best = findBestCounterExample();
@@ -204,14 +240,21 @@ public class GreetingServer extends Thread {
         return bestEndFlipClique.getCliqueCount() < bestClique.getCliqueCount() ? bestEndFlipClique : bestClique;
     }
 
-    void getNextWork(Socket client, String alg, String clientWidthString, String clientCliqueString) throws Exception {
+    void getNextWork(Socket client, String alg, String clientWidthString, String clientCliqueString) {
         Logger.logEvent("GET NEXT WORK");
         Logger.logClient(client.getInetAddress().toString(), alg, clientWidthString, clientCliqueString);
 
         int clientWidth = Integer.parseInt(clientWidthString);
         int clientCliqueCount = Integer.parseInt(clientCliqueString);
 
-        PrintStream out = new PrintStream(client.getOutputStream(), true);
+        PrintStream out = null;
+        try {
+            out = new PrintStream(client.getOutputStream(), true);
+        } catch (IOException e) {
+            Logger.logException(e);
+        }
+
+        this.connectedServers.put(client.getInetAddress().toString(), new Date());
 
         // If we're annealing - return the basis again
         if (this.annealing) {
@@ -220,30 +263,33 @@ public class GreetingServer extends Thread {
                     + this.annealingState.getBody());
         } else {
             switch (alg) {
-            case Config.BESTLICUQE_ALGORITHM_NAME:
-                PartyState bestState = getUniversalBestClique();
-                if (clientWidth == bestState.getWidth() && clientCliqueCount <= bestState.getCliqueCount()) {
-                    out.print(Config.R_CONTINE);
-                    Logger.logReturnContinue();
-                } else {
-                    Logger.logReturnClique(bestState.getWidth(), bestState.getCliqueCount());
-                    out.print(bestState.getWidth() + " " + bestState.getCliqueCount() + " " + bestState.getBody());
-                    client.close();
-                }
-                break;
+                case Config.BESTLICUQE_ALGORITHM_NAME:
+                    PartyState bestState = getUniversalBestClique();
+                    if (clientWidth == bestState.getWidth() && clientCliqueCount <= bestState.getCliqueCount()) {
+                        out.print(Config.R_CONTINE);
+                        Logger.logReturnContinue();
+                    } else {
+                        Logger.logReturnClique(bestState.getWidth(), bestState.getCliqueCount());
+                        out.print(bestState.getWidth() + " " + bestState.getCliqueCount() + " " + bestState.getBody());
+                    }
+                    break;
 
-            case Config.ENDFLIP_ALGORITHM_NAME:
-                if (clientWidth == bestEndFlipClique.getWidth()
-                        && clientCliqueCount <= bestEndFlipClique.getCliqueCount()) {
-                    out.print(Config.R_CONTINE);
-                    Logger.logReturnContinue();
-                } else {
-                    out.print(bestEndFlipClique.getWidth() + " " + bestEndFlipClique.getCliqueCount() + " "
-                            + bestEndFlipClique.getBody());
-                    Logger.logReturnClique(bestEndFlipClique.getWidth(), bestEndFlipClique.getCliqueCount());
-                    client.close();
-                }
-                break;
+                case Config.ENDFLIP_ALGORITHM_NAME:
+                    if (clientWidth == bestEndFlipClique.getWidth()
+                            && clientCliqueCount <= bestEndFlipClique.getCliqueCount()) {
+                        out.print(Config.R_CONTINE);
+                        Logger.logReturnContinue();
+                    } else {
+                        out.print(bestEndFlipClique.getWidth() + " " + bestEndFlipClique.getCliqueCount() + " "
+                                + bestEndFlipClique.getBody());
+                        Logger.logReturnClique(bestEndFlipClique.getWidth(), bestEndFlipClique.getCliqueCount());
+                    }
+                    break;
+            }
+            try {
+                client.close();
+            } catch (IOException e) {
+                Logger.logException(e);
             }
         }
     }
@@ -266,48 +312,8 @@ public class GreetingServer extends Thread {
 
     public static void main(String[] args) {
         int port = 5004;//Integer.parseInt(args[0]);
-        try {
-            Thread t = new GreetingServer(port);
-            t.start();
-        } catch (IOException e) {
-            Logger.logException(e);
-        }
+
+        Thread t = new GreetingServer(port);
+        t.start();
     }
 }
-
-class PartyState {
-    private int width;
-    private int cliqueCount;
-    private String body;
-
-    public PartyState(int width, int cliqueCount, String body) {
-        this.width = width;
-        this.cliqueCount = cliqueCount;
-        this.body = body;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public void setWidth(int width) {
-        this.width = width;
-    }
-
-    public int getCliqueCount() {
-        return cliqueCount;
-    }
-
-    public void setCliqueCount(int cliqueCount) {
-        this.cliqueCount = cliqueCount;
-    }
-
-    public String getBody() {
-        return body;
-    }
-
-    public void setBody(String body) {
-        this.body = body;
-    }
-}
-
