@@ -275,6 +275,62 @@ void best_clique() {
     }
 }
 
+void random_flip(int num_flips) {
+    char* alg_name = "BestClique";
+    double timediff;
+    struct timeval begin, now;
+    gettimeofday(&begin, NULL);
+
+    reset_state();
+    get_next_work(alg_name);
+
+    int i;
+    while (1) {
+        int row, column;
+
+        for (i = 0; i < num_flips; i++) {
+            row = 0;
+            column = 0;
+
+            row = random_int(0, currentState->width);
+            column = random_int(row, currentState->width);
+
+            flip_entry(currentState->g, row, column, currentState->width);
+        }
+
+        currentState->clique_count =
+            CliqueCountExtend(currentState->g, currentState->width);
+        bestState->num_calculations++;
+
+        printf("Number of cliques at %d: %d - best is %d\n",
+               currentState->width, currentState->clique_count,
+               bestState->clique_count);
+
+        
+        if (currentState->clique_count <= bestState->clique_count) {
+            update_best_clique();
+        } else if (currentState->clique_count > bestState->clique_count) {
+            update_current_clique();
+        }
+
+
+        if (currentState->clique_count == 0) {
+            send_counterexample(alg_name, currentState->g, currentState->width);
+            get_next_work(alg_name);
+        } else {
+            gettimeofday(&now, NULL);
+            timediff = (now.tv_sec - begin.tv_sec) +
+                       1e-6 * (now.tv_usec - begin.tv_usec);
+            if (timediff > update_interval) {
+                gettimeofday(&begin, NULL);
+                send_counterexample(alg_name, currentState->g,
+                                    currentState->width);
+                get_next_work(alg_name);
+            }
+        }
+    }
+}
+
 void end_flip(int num_flips) {
     char* alg_name = "EndFlip";
     double timediff;
@@ -325,6 +381,7 @@ void end_flip(int num_flips) {
     }
 }
 
+
 int main(int argc, char** argv) {
     srand(getpid());
     update_interval = 50;
@@ -352,6 +409,10 @@ int main(int argc, char** argv) {
             break;
         case 3:
             end_flip(arg);
+            break;
+        
+        case 4:
+            random_flip(arg);
             break;
         }
     }
