@@ -15,9 +15,12 @@ public class GreetingServer extends Thread {
     private boolean annealing = false;
     private int annealingCalculations = 0;
 
-    public GreetingServer(int port) {
+    public GreetingServer(int port){
+
         try {
             serverSocket = new ServerSocket(port);
+
+
         } catch (IOException e) {
             Logger.logException(e);
         }
@@ -26,13 +29,12 @@ public class GreetingServer extends Thread {
         bestEndFlipClique = new PartyState(0, Integer.MAX_VALUE, "");
         annealingState = new PartyState(0, Integer.MAX_VALUE, "");
 
-
         try {
             generateNewWidth();
         } catch (Exception e) {
             Logger.logException(e);
+            
         }
-
 
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
@@ -65,14 +67,22 @@ public class GreetingServer extends Thread {
                 String line = in.readLine();
                 String[] lines = line.split("\\s+");
 
+                String clientId = lines[1];
+                String clientAlgorithm = lines[2];
+                String clientWidth = lines[3];
+                String clientCliqueCount = lines[4];
+                String clientCalculations = lines[5];
+
+
                 switch (lines[0]) {
                     case Config.POSTEXAMPLE:
                         //PostExample alg bredde, clic, calcs, state
-                        postExample(client, lines[1], lines[2], lines[3], lines[4], lines[5]);
+                        String clientState = lines[6];
+                        postExample(client, clientId, clientAlgorithm, clientWidth, clientCliqueCount, clientCalculations, clientState);
                         break;
                     case Config.GET_NEXT_WORK:
                         //PostExample alg bredde
-                        getNextWork(client, lines[1], lines[2], lines[3]);
+                        getNextWork(client, clientId, clientAlgorithm, clientWidth, clientCliqueCount);
                         break;
 
                     default:
@@ -109,7 +119,7 @@ public class GreetingServer extends Thread {
         return new String(encoded, encoding);
     }
 
-    void postExample(Socket client, String alg, String width, String clientClique, String calculations, String s) {
+    void postExample(Socket client, String clientId, String alg, String width, String clientClique, String calculations, String s) {
         Logger.logEvent("POST EXAMPLE");
         Logger.logClient(client.getInetAddress().toString(), alg, width, clientClique);
 
@@ -120,7 +130,8 @@ public class GreetingServer extends Thread {
         DAO.updateCalculationCount(alg, Integer.parseInt(width), clientCalculations);
 
         /* Add the new calculations done by the client if we are not annealing */
-        if (clientWidth == this.bestEndFlipClique.getWidth() && !this.annealing) {
+
+        if (clientWidth == this.bestEndFlipClique.getWidth() && clientCliqueCount == this.bestEndFlipClique.getCliqueCount() && !this.annealing) {
             this.annealingCalculations += clientCalculations;
             double percentage = ((double) this.annealingCalculations / (double) Config.ANNEALING_THRESHOLD) * 100;
             Logger.logString(String.format("Annealing: %d of %d - %.2f %%", this.annealingCalculations, Config.ANNEALING_THRESHOLD, percentage));
@@ -185,6 +196,8 @@ public class GreetingServer extends Thread {
                         Logger.logBetterCliqueCount(alg, bestClique.getCliqueCount());
                     }
                     break;
+
+                case Config.BESTFLIP_ALGORITHM_NAME:
                 case Config.ENDFLIP_ALGORITHM_NAME:
                     if ((clientWidth >= bestEndFlipClique.getWidth())
                             && (clientCliqueCount < bestEndFlipClique.getCliqueCount())) {
@@ -240,7 +253,7 @@ public class GreetingServer extends Thread {
         return bestEndFlipClique.getCliqueCount() < bestClique.getCliqueCount() ? bestEndFlipClique : bestClique;
     }
 
-    void getNextWork(Socket client, String alg, String clientWidthString, String clientCliqueString) {
+    void getNextWork(Socket client, String clientId, String alg, String clientWidthString, String clientCliqueString) {
         Logger.logEvent("GET NEXT WORK");
         Logger.logClient(client.getInetAddress().toString(), alg, clientWidthString, clientCliqueString);
 
@@ -254,7 +267,7 @@ public class GreetingServer extends Thread {
             Logger.logException(e);
         }
 
-        this.connectedServers.put(client.getInetAddress().toString(), new Date());
+        this.connectedServers.put(clientId, new Date());
 
         // If we're annealing - return the basis again
         if (this.annealing) {
@@ -274,6 +287,7 @@ public class GreetingServer extends Thread {
                     }
                     break;
 
+                case Config.BESTFLIP_ALGORITHM_NAME:
                 case Config.ENDFLIP_ALGORITHM_NAME:
                     if (clientWidth == bestEndFlipClique.getWidth()
                             && clientCliqueCount <= bestEndFlipClique.getCliqueCount()) {
