@@ -7,7 +7,7 @@ all: $(TARGET)
 
 .PHONY: .FORCE
 $(TARGET): .FORCE
-	$(CC) -o $(TARGET) nextwork.c
+	$(CC) $(FLAGS) -o $(TARGET) nextwork.c
 
 .PHONY: clean
 clean:
