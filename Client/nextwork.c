@@ -1,4 +1,5 @@
 // Declarations to please the compiler
+#include "globals.h"
 char* server_ip;
 int server_port;
 int update_interval;
@@ -10,7 +11,7 @@ struct PartyState* bestState;
 #include "algorithms/bestflip.c"
 #include "algorithms/endflip.c"
 #include "algorithms/random-flip.c"
-#include "globals.h"
+
 #include "utils.c"
 #include <stdio.h>
 #include <stdlib.h>

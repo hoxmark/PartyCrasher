@@ -1,9 +1,8 @@
 #include "../utils.c"
 
-#include "../globals.h"
 #include "../counters/clique-count.c"
+#include "../globals.h"
 #include <sys/time.h>
-
 
 void best_clique() {
     char* alg_name = "BestClique";
@@ -20,12 +19,9 @@ void best_clique() {
         int column = random_int(row, currentState->width);
 
         flip_entry(currentState->g, row, column, currentState->width);
-        currentState->clique_count =
-            CliqueCount(currentState->g, currentState->width);
+        currentState->clique_count = CliqueCount(currentState->g, currentState->width);
         bestState->num_calculations++;
-        printf("Number of cliques at %d: %d - best is %d\n",
-               currentState->width, currentState->clique_count,
-               bestState->clique_count);
+        printf("Number of cliques at %d: %d - best is %d\n", currentState->width, currentState->clique_count, bestState->clique_count);
 
         if (currentState->clique_count <= bestState->clique_count) {
             update_best_clique();
@@ -38,12 +34,10 @@ void best_clique() {
             get_next_work(alg_name);
         } else {
             gettimeofday(&now, NULL);
-            timediff = (now.tv_sec - begin.tv_sec) +
-                       1e-6 * (now.tv_usec - begin.tv_usec);
+            timediff = (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
             if (timediff > update_interval) {
                 gettimeofday(&begin, NULL);
-                send_counterexample(alg_name, currentState->g,
-                                    currentState->width);
+                send_counterexample(alg_name, currentState->g, currentState->width);
                 get_next_work(alg_name);
             }
         }

@@ -1,7 +1,7 @@
 CC		= gcc
 FLAGS   = -Wall -O3
 TARGET	= client.o
-OBJS = ./algorithms/%.c ./counters/%.c network.c globals.h
+OBJS 	= ./algorithms/%.c ./counters/%.c network.c globals.h
 
 all: $(TARGET)
 
