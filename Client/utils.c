@@ -118,6 +118,32 @@ int build_socket() {
     return sock;
 }
 
+//TODO merge build_socket_to_load_balancer with build_socket
+int build_socket_to_load_balancer() {
+    int sock;
+    struct sockaddr_in server;
+
+    // Create socket
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == -1) {
+        printf("Could not create socket");
+    }
+    // puts("Socket created");
+
+    server.sin_addr.s_addr = inet_addr(load_balancer_ip);
+    server.sin_family = AF_INET;
+    server.sin_port = htons(load_balancer_port);
+    // Connect to remote server
+    if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
+        perror("Connection failed. Retrying in 20 seconds");
+        sleep(20);
+        return build_socket_to_load_balancer(server_ip, server_port);
+    }
+
+    // puts("Connected\n");
+    return sock;
+}
+
 int get_next_work(char* alg_name) {
     int sock = build_socket();
     char clientMessage[100], server_reply[600000], buf[512];
@@ -210,5 +236,43 @@ void send_counterexample(char* alg_name, int* buffer, int m) {
     bestState->num_calculations = 0;
     close(sock);
 }
+
+void getServerIp(){
+    printf("GET SERVER IP");
+
+    int sock = build_socket_to_load_balancer();
+    char clientMessage[100], server_reply[600000], buf[512];
+
+    sprintf(clientMessage, "GetServerIp");
+
+    printf("%s \n", clientMessage);
+    if (send(sock, clientMessage, strlen(clientMessage), 0) < 0) {
+        // puts("Send failed");
+    } else {
+        // puts("send succes");
+    }
+
+    shutdown(sock, 1); // outgoing
+
+    // Receive a reply from the server
+    size_t count = 0, i = 0;
+    size_t res = recv(sock, buf, 512, 0);
+    while (res != 0 && count < 600000) {
+        for (i = 0; i < res; i++) {
+            server_reply[count] = buf[i];
+            count++;
+        }
+        res = recv(sock, buf, 512, 0);
+    }
+    shutdown(sock, 2); // outgoing
+    close(sock);
+
+    sscanf(server_reply, "%s", server_ip);
+        printf("Connection to IP: %s \n",
+               server_ip);
+    
+}
+
+
 
 #endif

@@ -5,7 +5,7 @@ import java.nio.file.*;
 import java.nio.charset.*;
 import java.io.*;
 
-public class GreetingServer extends Thread {
+public class Coordinator extends Thread {
     private ServerSocket serverSocket;
     private Map<String, Date> connectedServers;
 
@@ -15,7 +15,7 @@ public class GreetingServer extends Thread {
     private boolean annealing = false;
     private int annealingCalculations = 0;
 
-    public GreetingServer(int port){
+    public Coordinator(int port){
 
         try {
             serverSocket = new ServerSocket(port);
@@ -327,7 +327,7 @@ public class GreetingServer extends Thread {
     public static void main(String[] args) {
         int port = 5004;//Integer.parseInt(args[0]);
 
-        Thread t = new GreetingServer(port);
+        Thread t = new Coordinator(port);
         t.start();
     }
 }

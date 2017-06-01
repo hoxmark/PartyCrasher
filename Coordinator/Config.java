@@ -1,4 +1,5 @@
 class Config {
+    public static final String GETSERVERIP = "GetServerIp";
     public static final String POSTEXAMPLE = "PostExample";
     public static final String GET_NEXT_WORK = "GetNextWork";
     public static final String ENDFLIP_ALGORITHM_NAME = "EndFlip";
@@ -11,4 +12,5 @@ class Config {
     public static final String R_CONTINE = "CONTINUE";
     public static final String R_RETRY = "RETRY";
     
+    public static final String[] SERVERIPS = {"104.198.30.238", "104.198.30.238"};
 }
