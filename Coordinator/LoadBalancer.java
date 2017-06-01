@@ -7,6 +7,10 @@ import java.io.*;
 
 public class LoadBalancer extends Thread {
     ServerSocket serverSocket;
+    int numberOfRequests; 
+    int numberOfServers = 3; 
+    
+
     public LoadBalancer(int port){
         try {
             serverSocket = new ServerSocket(port);
@@ -29,6 +33,7 @@ public class LoadBalancer extends Thread {
                     case Config.GETSERVERIP:
                         //Requesting server IP 
                         System.out.println("recv:"+lines[0]);
+                        numberOfRequests++;
                         getNewServerIp(client);
                         break;                   
                     default:
@@ -57,7 +62,12 @@ public class LoadBalancer extends Thread {
         } catch (IOException e) {
             Logger.logException(e);
         }
-        out.print(Config.SERVERIPS[0]);
+
+        int toChoose = numberOfRequests%numberOfServers;
+        // System.out.println(numberOfRequests);
+        // System.out.println(numberOfServers);
+        // System.out.println(toChoose);
+        out.print(Config.SERVERIPS[toChoose]);
     }
 
     public static void main(String[] args) {
