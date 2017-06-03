@@ -1,58 +1,52 @@
-rm clique-count.c
-rm nextwork.c
-rm nextwork.o
+sudo apt-get install unzip
+sudo rm -R Client
+wget https://www.dropbox.com/s/3izni5hmjtlhjck/Client.zip?dl=0
 
- wget https://raw.githubusercontent.com/hoxmark/PartyCrasher/master/clique-count.c?token=AFLKR7_hIE7VmHzILzdUitBo5Nhps44rks5ZLId8wA%3D%3D
-    mv clique-count.c?token=AFLKR7_hIE7VmHzILzdUitBo5Nhps44rks5ZLId8wA%3D%3D clique-count.c
+unzip Client.zip?dl=0 -d ./
 
-    wget https://raw.githubusercontent.com/hoxmark/PartyCrasher/master/clique-count-extend.c?token=AFLKR0xNeK5CdWvPPei9qFc3yJ9VTxFJks5ZLIeMwA%3D%3D
-    mv clique-count-extend.c?token=AFLKR0xNeK5CdWvPPei9qFc3yJ9VTxFJks5ZLIeMwA%3D%3D clique-count-extend.c
+cd Client
 
-    wget https://raw.githubusercontent.com/hoxmark/PartyCrasher/master/nextwork.c?token=AFLKR5CZyLervNA4jKIAyQwfcy8K_7jEks5ZLIETwA%3D%3D
-    mv nextwork.c?token=AFLKR5CZyLervNA4jKIAyQwfcy8K_7jEks5ZLIETwA%3D%3D nextwork.c
+gcc -O3 -o client.o nextwork.c
 
-    gcc nextwork.c -o nextwork.o
-
-
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt & 
+./client.o 104.198.30.238 5004 1 1 >> log.txt & 
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
-./nextwork.o 104.198.30.238 5004 3 1 >>log.txt &
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
 disown
 
 exit
