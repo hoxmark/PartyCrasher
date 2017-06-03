@@ -1,9 +1,10 @@
-
+#ifndef CLIQUE_COUNT_PTHREAD_C
+#define CLIQUE_COUNT_PTHREAD_C
  // sgsize must be >= 5 && <= 10
 #include <stdio.h>
 
 
-int CliqueCount(int *g, int gsize)
+int CliqueCountPthread(int *g, int gsize, int from, int to)
 {
     int i;
     int j;
@@ -19,7 +20,7 @@ int CliqueCount(int *g, int gsize)
     int sgsize = 10;
 
 
-    for(i=0;i < gsize-sgsize+1; i++)
+    for(i=from;i < to; i++)
     {
 	for(j=i+1;j < gsize-sgsize+2; j++)
         {
@@ -154,3 +155,4 @@ int CliqueCount(int *g, int gsize)
 // 	printf("Answer: %d\n", ans);
 
 // }
+#endif

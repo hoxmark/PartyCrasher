@@ -12,6 +12,7 @@ class DAO {
 
             // Now connect to your databases
             DB db = mongoClient.getDB("Calculations");
+            
             DBCollection collection = db.getCollection("Calculations");
 
             int existing;
@@ -22,18 +23,18 @@ class DAO {
 
             HashMap newMap = new HashMap<>();
 
-            // Update if we have an existing entry for this width 
+            // Update if we have an existing entry for this width
             if (cursor.hasNext()) {
                 BasicDBObject ob = (BasicDBObject) cursor.next();
                 if (ob.get("calculations") != null) {
                     newMap = (HashMap) ob.get("calculations");
-                    // If entry for this algorithm, get existing and update it 
+                    // If entry for this algorithm, get existing and update it
                     if (newMap.get(algorithm) != null) {
                         existing = (int) newMap.get(algorithm);
                         ret = existing + calculations;
                         newMap.put(algorithm, existing + calculations);
                     } else {
-                        // We don't have an entry for this algorithm 
+                        // We don't have an entry for this algorithm
                         ret = calculations;
                         newMap.put(algorithm, calculations);
                     }
@@ -47,7 +48,7 @@ class DAO {
                 updateObj.put("$set", newDocument);
                 collection.update(searchQuery, updateObj);
             } else {
-                // We don't have an entry for this width. create it 
+                // We don't have an entry for this width. create it
                 BasicDBObject document = new BasicDBObject();
                 document.put("width", width);
                 Map<String, Integer> calcs = new HashMap<>();

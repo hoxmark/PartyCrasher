@@ -1,8 +1,9 @@
-
+#ifndef CLIQUE_COUNT_ROW_C
+#define CLIQUE_COUNT_ROW_C
 // sgsize must be >= 5 && <= 10
 #include <stdio.h>
 
-int CliqueCountExtend(int* g, int gsize) {
+int CliqueCountRow(int* g, int gsize) {
     int i;
     int j;
     int k;
@@ -247,3 +248,4 @@ int CliqueCountExtend(int* g, int gsize) {
 // 	printf("Answer: %d\n", ans);
 
 // }
+#endif
