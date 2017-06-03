@@ -3,7 +3,6 @@
 
 #include <math.h>
 
-
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -243,10 +242,10 @@ struct PairTuple get_tabu_flip_index() {
     shutdown(sock, 2); // outgoing
     close(sock);
 
-    if(server_reply[0] != 'W'){
-            sscanf(server_reply, "%d %d", &ret.i, &ret.j);
-            printf("FLIP TO DO: %d %d\n", ret.i, ret.j);
-            return ret;
+    if (server_reply[0] != 'W') {
+        sscanf(server_reply, "%d %d", &ret.i, &ret.j);
+        printf("FLIP TO DO: %d %d\n", ret.i, ret.j);
+        return ret;
     } else {
         // TODO Check this
         sleep(10);
@@ -350,8 +349,7 @@ void send_counterexample(char* alg_name, int* buffer, int m, int clique_count, i
 void send_counterexample_tabu(char* alg_name, struct PairTuple doneFlip, int* buffer, int m, int clique_count, int calculations) {
     int length = m * m;
     char message_head[100];
-    sprintf(message_head, "PostTabuExample %s %s %d %d %d %d %d ", uuid_str, alg_name, doneFlip.i, doneFlip.j, m,
-            clique_count, calculations);
+    sprintf(message_head, "PostTabuExample %s %s %d %d %d %d %d ", uuid_str, alg_name, doneFlip.i, doneFlip.j, m, clique_count, calculations);
 
     // Copy the contents of the int array to our send body buffer
     char message_body[length];
@@ -379,6 +377,35 @@ void send_counterexample_tabu(char* alg_name, struct PairTuple doneFlip, int* bu
     // Server has taken our calculations into account - reset counter
     bestState->num_calculations = 0;
     close(sock);
+}
+
+void generate_random_uuid() {
+    int t = 0;
+    char* szTemp = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
+    char* szHex = "0123456789ABCDEF-";
+    int nLen = strlen(szTemp);
+
+    for (t = 0; t < nLen + 1; t++) {
+        int r = rand() % 16;
+        char c = ' ';
+
+        switch (szTemp[t]) {
+        case 'x': {
+            c = szHex[r];
+        } break;
+        case 'y': {
+            c = szHex[(r & 0x03) | 0x08];
+        } break;
+        case '-': {
+            c = '-';
+        } break;
+        case '4': {
+            c = '4';
+        } break;
+        }
+
+        uuid_str[t] = (t < nLen) ? c : 0x00;
+    }
 }
 
 #endif

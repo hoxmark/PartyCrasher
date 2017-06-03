@@ -4,7 +4,7 @@
 char* server_ip;
 int server_port;
 int update_interval;
-char uuid_str[37];
+char uuid_str[40];
 struct PartyState* currentState;
 struct PartyState* bestState;
 struct PairTuple bestFlip;
@@ -21,14 +21,10 @@ char* alg_name;
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <uuid/uuid.h>
-
 int main(int argc, char** argv) {
     srand(getpid());
-    uuid_t id;
-    uuid_generate(id);
-    uuid_unparse_lower(id, uuid_str);
-    printf("generate uuid=%s\n", uuid_str);
+    generate_random_uuid();
+    printf("uuid=%s\n", uuid_str);
 
     update_interval = 50;
 

@@ -82,7 +82,7 @@ public class Coordinator extends Thread {
         for (Iterator<Map.Entry<String, Date>> it = connectedServers.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry<String, Date> entry = it.next();
             long secondsSinceConnected = (now.getTime() - entry.getValue().getTime()) / 1000;
-            if (secondsSinceConnected > Config.CLIENT_UPDATE_INTERVAL_SECONDS) {
+            if (secondsSinceConnected > Config.CLIENT_UPDATE_INTERVAL_SECONDS * 6) {
                 it.remove();
             }
         }
