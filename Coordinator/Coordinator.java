@@ -151,46 +151,6 @@ public class Coordinator extends Thread {
         }
     }
 
-    //    void getEndFlipTabuList(Socket client, String [] args){
-    //        PrintStream out;
-    //        try {
-    //            out = new PrintStream(client.getOutputStream(), true);
-    //
-    //            String ret = "";
-    //            for (TabuPair tabu : this.endflipTabuList) {
-    //                System.out.println("WE ARE ADDING IT ");
-    //                Logger.logString("(" + tabu.getLeft() + ", " + tabu.getRight() + ")");
-    //                ret += "(" + tabu.getLeft() + ", " + tabu.getRight() + ") ";
-    //            }
-    //            out.print(ret);
-    //        } catch (IOException e) {
-    //            e.printStackTrace();
-    //        }
-    //    }
-
-    //    void postEndFlipTabu(Socket client, String[] args) {
-    //        String clientAlgorithm = args[2];
-    //        String clientWidthString = args[3];
-    //        String clientCliqueCountString = args[4];
-    //        String clientCalculationsString = args[5];
-    //
-    //        String clientState = args[6];
-    //
-    //
-    //        Logger.logEvent("POST TABU EXAMPLE");
-    //        Logger.logClient(client.getInetAddress().toString(), clientAlgorithm, clientWidthString, clientCliqueCountString);
-    //
-    //        int clientWidth = Integer.parseInt(clientWidthString);
-    //        int clientCliqueCount = Integer.parseInt(clientCliqueCountString);
-    //        int clientCalculations = Integer.parseInt(clientCalculationsString);
-    //
-    //        DAO.updateCalculationCount(clientAlgorithm, clientWidth, clientCalculations);
-    //        checkAndWriteCounterexample(clientAlgorithm, clientWidth, clientCliqueCount, clientState);
-    //
-    //
-    //        // Only process the posted state if we're not in an annealing state
-    //    }
-
     String fileToString(String value) {
         String filename = ("../counterexamples/" + value + ".txt");
         return readFile(filename, StandardCharsets.UTF_8);
@@ -510,49 +470,6 @@ public class Coordinator extends Thread {
                         break;
                 }
             }
-
-
-            //            double threshold2 = Math.pow(this.bestTabuSearchClique.getWidth(), 2);
-            //            int threshold = (int) threshold2 / 10;
-            //            this.tabuCalculations += clientCalculations;
-            //            double percentage = ((double) this.tabuCalculations / (double) threshold) * 100;
-            //            double percentage2 = ((double) this.tabuCalculations / (double) threshold2) * 100;
-            //            Logger.logString(String.format("Next stage: %d of %d - %.2f %%", this.tabuCalculations, threshold, percentage));
-            //            Logger.logString(String.format("Annealing: %d of %.2f - %.2f %%", this.tabuCalculations, threshold2, percentage2));
-            //
-            //            /* If we have done enough calculations, move the tabu one step - but only if it actually improved  */
-            //            if (this.tabuCalculations > threshold && this.bestTabuSearchClique.getCliqueCount() < this.standardTabuSearchClique.getCliqueCount()) {
-            //                this.tabuList.add(this.bestFlip);
-            //                this.standardTabuSearchClique = this.bestTabuSearchClique;
-            //                this.tabuCalculations = 0;
-            //            }
-            //
-            //            /* Enter annealing state if we have done enough calcs, but didn't improve the search.
-            //            * TODO: Check if this range is big enough
-            //            * */
-            //            if (this.tabuCalculations > threshold2 && this.bestTabuSearchClique.getCliqueCount() >= this.standardTabuSearchClique.getCliqueCount()) {
-            //                Logger.logEnterState("Annealing");
-            //                this.tabuList = new ArrayList<>();
-            //                this.annealing = true;
-            //                this.generateNewWidth();
-            //
-            //                // Launch a thread that sets annealing to false after a timeout
-            //
-            //                new Thread(new Runnable() {
-            //                    @Override
-            //                    public void run() {
-            //                        try {
-            //                            Thread.sleep(Config.ANNEALING_TIMEOUT_MS);
-            //                        } catch (InterruptedException e) {
-            //                            Logger.logException(e);
-            //                        }
-            //                        Logger.logEnterState("Default");
-            //                        annealing = false;
-            //                        annealingCalculations = 0;
-            //                        tabuCalculations = 0;
-            //                    }
-            //                }).start();
-            //            }
         }
     }
 
@@ -575,20 +492,6 @@ public class Coordinator extends Thread {
         int clientCalculations = Integer.parseInt(clientCalculationsString);
 
         DAO.updateCalculationCount(clientAlgorithm, clientWidth, clientCalculations);
-
-        /* Add the new calculations done by the client if we are not annealing */
-
-        //        if (clientWidth == this.bestEndFlipClique.getWidth() && clientCliqueCount == this.bestEndFlipClique.getCliqueCount() && !this.annealing) {
-        //            this.annealingCalculations += clientCalculations;
-        //            double percentage = ((double) this.annealingCalculations / (double) Config.ANNEALING_THRESHOLD) * 100;
-        //            Logger.logString(String.format("Annealing: %d of %d - %.2f %%", this.annealingCalculations, Config.ANNEALING_THRESHOLD, percentage));
-        //        }
-
-        /* If the new count puts us over the annealing threshold, anneal for some time */
-        //        if (clientWidth == getUniversalBestClique().getWidth() && this.annealingCalculations > Config.ANNEALING_THRESHOLD && !this.annealing) {
-        //
-        //        }
-
         checkAndWriteCounterexample(clientAlgorithm, clientWidth, clientCliqueCount, clientState);
 
         // Only process the posted state if we're not in an annealing state
@@ -726,7 +629,6 @@ public class Coordinator extends Thread {
         t.start();
     }
 }
-
 
 class TabuPair<L, R> {
 
