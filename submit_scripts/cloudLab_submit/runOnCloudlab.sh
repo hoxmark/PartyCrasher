@@ -1,6 +1,8 @@
 sudo apt-get install unzip
 sudo rm -R Client
-wget https://www.dropbox.com/s/3izni5hmjtlhjck/Client.zip?dl=0
+sudo rm Client.zip?dl=0
+
+wget https://www.dropbox.com/s/1ogcto0vtiwwn3f/Client.zip?dl=0
 
 unzip Client.zip?dl=0 -d ./
 

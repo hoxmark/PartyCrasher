@@ -3,9 +3,10 @@
 # 16 cores ubuntu 15
 ssh -i /Users/hoxmark/Downloads/hoxmark.pem ubuntu@169.231.235.158 << EOF
     sudo apt-get install unzip
-    sudo apt-get install uuid-dev
+    sudo rm -R Client
+    sudo rm Client.zip?dl=0
 
-    wget https://www.dropbox.com/s/3izni5hmjtlhjck/Client.zip?dl=0
+    wget https://www.dropbox.com/s/1ogcto0vtiwwn3f/Client.zip?dl=0
 
     unzip Client.zip?dl=0 -d ./
 
@@ -61,67 +62,68 @@ EOF
 # # 16 cores ubuntu 15
 ssh -i /Users/hoxmark/Downloads/hoxmark.pem ubuntu@169.231.235.188 << EOF
    sudo apt-get install unzip
-    sudo apt-get install uuid-dev
+sudo rm -R Client
+sudo rm Client.zip?dl=0
 
-    wget https://www.dropbox.com/s/3izni5hmjtlhjck/Client.zip?dl=0
+wget https://www.dropbox.com/s/1ogcto0vtiwwn3f/Client.zip?dl=0
 
-    unzip Client.zip?dl=0 -d ./
+unzip Client.zip?dl=0 -d ./
 
-    cd Client
+cd Client
 
-    gcc -O3 -o client.o nextwork.c
+gcc -O3 -o client.o nextwork.c
 
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt & 
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
-    ./client.o 104.198.30.238 5004 1 1 >> log.txt &
-    disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt & 
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
+./client.o 104.198.30.238 5004 1 1 >> log.txt &
+disown
 
-    exit
-    logout
+exit
 EOF
 
 # 16 cores ubuntu 15
 ssh -i /Users/hoxmark/Downloads/hoxmark.pem ubuntu@169.231.235.133 << EOF
    sudo apt-get install unzip
-    sudo apt-get install uuid-dev
+    sudo rm -R Client
+    sudo rm Client.zip?dl=0
 
-    wget https://www.dropbox.com/s/3izni5hmjtlhjck/Client.zip?dl=0
+    wget https://www.dropbox.com/s/1ogcto0vtiwwn3f/Client.zip?dl=0
 
     unzip Client.zip?dl=0 -d ./
 
@@ -171,15 +173,15 @@ ssh -i /Users/hoxmark/Downloads/hoxmark.pem ubuntu@169.231.235.133 << EOF
     disown
 
     exit
-    logout
 EOF
 
 # 16 cores ubuntu 15
 ssh -i /Users/hoxmark/Downloads/hoxmark.pem ubuntu@169.231.235.175 << EOF
    sudo apt-get install unzip
-    sudo apt-get install uuid-dev
+    sudo rm -R Client
+    sudo rm Client.zip?dl=0
 
-    wget https://www.dropbox.com/s/3izni5hmjtlhjck/Client.zip?dl=0
+    wget https://www.dropbox.com/s/1ogcto0vtiwwn3f/Client.zip?dl=0
 
     unzip Client.zip?dl=0 -d ./
 
@@ -229,6 +231,5 @@ ssh -i /Users/hoxmark/Downloads/hoxmark.pem ubuntu@169.231.235.175 << EOF
     disown
 
     exit
-    logout
 EOF
 
