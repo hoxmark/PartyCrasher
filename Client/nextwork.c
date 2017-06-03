@@ -1,16 +1,21 @@
 // Declarations to please the compiler
 #include "globals.h"
+#include "queue.c"
 char* server_ip;
 int server_port;
 int update_interval;
 char uuid_str[37];
 struct PartyState* currentState;
 struct PartyState* bestState;
+struct PairTuple bestFlip;
+char* alg_name;
 
 #include "algorithms/bestclique.c"
 #include "algorithms/bestflip.c"
 #include "algorithms/endflip.c"
+#include "algorithms/endflip_tabu.c"
 #include "algorithms/random-flip.c"
+#include "algorithms/tabusearch.c"
 
 #include "utils.c"
 #include <stdio.h>
@@ -25,7 +30,7 @@ int main(int argc, char** argv) {
     uuid_unparse_lower(id, uuid_str);
     printf("generate uuid=%s\n", uuid_str);
 
-    update_interval = 10;
+    update_interval = 5;
 
     // Initialize structs
     struct PartyState standard, standard2;
@@ -46,12 +51,17 @@ int main(int argc, char** argv) {
         // TODO make a case 1
         switch (alg_type) {
         case 1:
-            best_flip();
+            // best_flip();
+            tabu_search();
+            break;
         case 2:
             best_clique();
             break;
         case 3:
             end_flip(arg);
+            break;
+        case 4:
+            endflip_tabu();
             break;
         }
     }

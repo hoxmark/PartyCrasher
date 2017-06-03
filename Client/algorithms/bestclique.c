@@ -5,14 +5,14 @@
 #include <sys/time.h>
 
 void best_clique() {
-    char* alg_name = "BestClique";
+    alg_name = "BestClique";
     double timediff;
     struct timeval begin, now;
     gettimeofday(&begin, NULL);
 
     reset_state();
 
-    get_next_work(alg_name);
+    get_next_work();
 
     while (1) {
         int row = random_int(0, currentState->width);
@@ -20,7 +20,7 @@ void best_clique() {
 
         flip_entry(currentState->g, row, column, currentState->width);
         currentState->clique_count = CliqueCount(currentState->g, currentState->width);
-        bestState->num_calculations++;
+        currentState->num_calculations++;
         printf("Number of cliques at %d: %d - best is %d\n", currentState->width, currentState->clique_count, bestState->clique_count);
 
         if (currentState->clique_count <= bestState->clique_count) {
@@ -30,15 +30,15 @@ void best_clique() {
         }
 
         if (currentState->clique_count == 0) {
-            send_counterexample(alg_name, currentState->g, currentState->width);
-            get_next_work(alg_name);
+            send_counterexample(alg_name, currentState->g, currentState->width, currentState->clique_count, currentState->num_calculations);
+            get_next_work();
         } else {
             gettimeofday(&now, NULL);
             timediff = (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
             if (timediff > update_interval) {
                 gettimeofday(&begin, NULL);
-                send_counterexample(alg_name, currentState->g, currentState->width);
-                get_next_work(alg_name);
+                send_counterexample(alg_name, currentState->g, currentState->width, currentState->clique_count, currentState->num_calculations);
+                get_next_work();
             }
         }
     }
