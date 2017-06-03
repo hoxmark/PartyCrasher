@@ -14,7 +14,7 @@ class Config {
 
     public static final int ENDFLIP_TO_TABU_THRESHOLD = 100;
 
-    public static final int CLIENT_UPDATE_INTERVAL_SECONDS = 15;
+    public static final int CLIENT_UPDATE_INTERVAL_SECONDS = 50;
     public static final int ANNEALING_THRESHOLD = 1000000;
     public static final int ANNEALING_TIMEOUT_MS = CLIENT_UPDATE_INTERVAL_SECONDS * 1000;
     public static final String R_CONTINE = "CONTINUE";

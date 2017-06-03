@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
     uuid_unparse_lower(id, uuid_str);
     printf("generate uuid=%s\n", uuid_str);
 
-    update_interval = 5;
+    update_interval = 50;
 
     // Initialize structs
     struct PartyState standard, standard2;
