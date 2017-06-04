@@ -47,7 +47,7 @@ public class Coordinator extends Thread {
         } catch (IOException e) {
             Logger.logException(e);
         }
-        this.saveStateTimer = new Timer(); 
+        this.saveStateTimer = new Timer();
         connectedServers = new HashMap<>();
 
         bestClique = new PartyState(0, Integer.MAX_VALUE, "");
@@ -690,29 +690,29 @@ public class Coordinator extends Thread {
     }
 
     private void saveState() {
-        if (DAO.isMaster()) {
-            Logger.logString("Saving state");
-            DAO.savePartyState("annealingState", annealingState);
-            DAO.savePartyState("bestClique", bestClique);
-            DAO.savePartyState("bestEndFlipClique", bestEndFlipClique);
+        // if (DAO.isMaster()) {
+        Logger.logString("Saving state");
+        DAO.savePartyState("annealingState", annealingState);
+        DAO.savePartyState("bestClique", bestClique);
+        DAO.savePartyState("bestEndFlipClique", bestEndFlipClique);
 
-            DAO.savePartyState("currentTabuSearchClique", currentTabuSearchClique);
-            DAO.savePartyState("bestTabuSearchClique", bestTabuSearchClique);
-            DAO.saveTabuPair("bestTabuSearchFlip", bestTabuSearchFlip);
-            DAO.saveTabuPairList("tabuSearchValidFlipList", tabuSearchValidFlipList);
-            DAO.saveTabuPairList("tabuSearchTabuList", tabuSearchTabuList);
+        DAO.savePartyState("currentTabuSearchClique", currentTabuSearchClique);
+        DAO.savePartyState("bestTabuSearchClique", bestTabuSearchClique);
+        DAO.saveTabuPair("bestTabuSearchFlip", bestTabuSearchFlip);
+        DAO.saveTabuPairList("tabuSearchValidFlipList", tabuSearchValidFlipList);
+        DAO.saveTabuPairList("tabuSearchTabuList", tabuSearchTabuList);
 
-            DAO.savePartyState("currentEndFlipTabueClique", currentEndFlipTabueClique);
-            DAO.savePartyState("bestEndFlipTabuClique", bestEndFlipTabuClique);
-            DAO.saveTabuPair("bestEndFlipTabuFlip", bestEndFlipTabuFlip);
-            DAO.saveTabuPairList("endflipValidFlipList", endflipValidFlipList);
-            DAO.saveTabuPairList("endflipTabuList", endflipTabuList);
-        } else {
+        DAO.savePartyState("currentEndFlipTabueClique", currentEndFlipTabueClique);
+        DAO.savePartyState("bestEndFlipTabuClique", bestEndFlipTabuClique);
+        DAO.saveTabuPair("bestEndFlipTabuFlip", bestEndFlipTabuFlip);
+        DAO.saveTabuPairList("endflipValidFlipList", endflipValidFlipList);
+        DAO.saveTabuPairList("endflipTabuList", endflipTabuList);
+        // } else {
             /* We are not master anymore. Cancel the save state timer. It will be restarted if we get master again*/
-            Logger.logString("Not master - canceling saveStateTimer");
-            this.saveStateTimer.cancel();
-            this.saveStateTimer.purge();
-        }
+        // Logger.logString("Not master - canceling saveStateTimer");
+        // this.saveStateTimer.cancel();
+        // this.saveStateTimer.purge();
+        // }
     }
 
     private void restoreState() {
