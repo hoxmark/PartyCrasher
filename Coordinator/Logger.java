@@ -41,6 +41,7 @@ class Logger {
     }
 
     static void logException(Exception e) {
+        e.printStackTrace();
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = new Date();
         System.err.println(
