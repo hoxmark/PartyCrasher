@@ -99,7 +99,7 @@ public class LoadBalancer extends Thread {
             // DataOutputStream serverOut = new DataOutputStream(outToServer);
             // serverOut.writeUTF("RestoreState");
             PrintStream out = new PrintStream(server.getOutputStream(), true);
-            out.print("RestoreState");
+            out.print("RestoreState LoadBalancer");
             server.close();
         }catch(IOException e) {
             e.printStackTrace();
