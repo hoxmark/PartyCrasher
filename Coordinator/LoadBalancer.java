@@ -95,9 +95,11 @@ public class LoadBalancer extends Thread {
         try {
             Socket server = new Socket(ip, port);
             System.out.println("Just connected to " + server.getRemoteSocketAddress());
-            OutputStream outToServer = server.getOutputStream();
-            DataOutputStream serverOut = new DataOutputStream(outToServer);
-            serverOut.writeUTF("RestoreState");
+            // OutputStream outToServer = server.getOutputStream();
+            // DataOutputStream serverOut = new DataOutputStream(outToServer);
+            // serverOut.writeUTF("RestoreState");
+            PrintStream out = new PrintStream(server.getOutputStream(), true);
+            out.print("RestoreState");
             server.close();
         }catch(IOException e) {
             e.printStackTrace();
