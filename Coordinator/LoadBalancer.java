@@ -10,6 +10,7 @@ import com.mongodb.*;
 public class LoadBalancer extends Thread {
     static MongoClient mongoClient;
     ServerSocket serverSocket;
+    static ReplicaSetStatus rss; 
     int numberOfRequests; 
     int numberOfServers = 3; 
     
@@ -20,15 +21,30 @@ public class LoadBalancer extends Thread {
         } catch (IOException e) {
             Logger.logException(e);
         }
-        // mongoClient = new MongoClient("104.197.154.195", 27017);
+        mongoClient = new MongoClient(
+            Arrays.asList(new ServerAddress("104.198.30.238", 27017),
+                new ServerAddress("104.197.154.195", 27017),
+                new ServerAddress("104.197.239.143", 27017)));
+        // MongoClient mongoClient = new MongoClient(
+        //     Arrays.asList(new ServerAddress("10.128.0.2", 27017),
+        //         new ServerAddress("10.128.0.5", 27017),
+        //         new ServerAddress("10.128.0.6", 27017)));
+        rss = mongoClient.getReplicaSetStatus();
         // ReplicaSetStatus rss = mongoClient.getReplicaSetStatus();
-        // // ReplicaSetStatus rss = mongoClient.getReplicaSetStatus();
-        // // System.out.println(mongoClient.getAllAddress());
+        System.out.println("----------");
+        System.out.println(rss);
+        System.out.println(rss.getMaster());
+        System.out.println(rss.getName());
+        System.out.println(rss.isMaster(new ServerAddress("104.198.30.238")));
+        System.out.println(rss.isMaster(new ServerAddress("104.197.154.195")));
+        System.out.println(rss.isMaster(new ServerAddress("104.197.239.143")));
+        System.out.println("----------");
         // // System.out.println(mongoClient.getAddress());
         // // System.out.println(mongoClient.getConnectPoint());
-        // // System.out.println(mongoClient.getMongoOptions().getReadPreference());
         // System.out.println("getPrimary()");
-        // System.out.println(mongoClient.getPrimary());
+        // System.out.println(mongoClient.getMongoOptions().getReadPreference());
+        // System.out.println(mongoClient.getServerDescription());
+        // ServerDescription a = new ServerDescription(mongoClient);
     }
 
     public void run() {
@@ -43,7 +59,13 @@ public class LoadBalancer extends Thread {
 
                 switch (lines[0]) {
                     case Config.GETSERVERIP:
-                        //Requesting server IP 
+                        // System.out.println("----------");
+                        // System.out.println(rss);
+                        // System.out.println(rss.getMaster());
+                        // System.out.println(rss.getName());
+                        
+                        // System.out.println("----------");
+                        // //Requesting server IP 
                         System.out.println("recv:"+lines[0]);
                         numberOfRequests++;
                         getNewServerIp(client);
@@ -79,7 +101,19 @@ public class LoadBalancer extends Thread {
         // System.out.println(numberOfRequests);
         // System.out.println(numberOfServers);
         // System.out.println(toChoose);
-        out.print(Config.SERVERIPS[toChoose]);
+        if ( rss.isMaster(new ServerAddress("104.198.30.238"))){
+            System.out.print("104.198.30.238");
+            out.print("104.198.30.238");
+        } else if ( rss.isMaster(new ServerAddress("104.197.154.195"))){
+            System.out.print("104.197.154.195");
+            out.print("104.197.154.195");
+        } else if ( rss.isMaster(new ServerAddress("104.197.239.143"))){
+            System.out.print("104.197.239.143");
+            out.print("104.197.239.143");
+        } else {
+            System.out.println("ERROR: no Primary DB");
+        }        
+        // out.print(Config.SERVERIPS[toChoose]);
     }
 
     public static void main(String[] args) {
