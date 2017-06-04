@@ -119,15 +119,15 @@ public class LoadBalancer extends Thread {
         // System.out.println(numberOfServers);
         // System.out.println(toChoose);
         if ( rss.isMaster(new ServerAddress("104.198.30.238"))){
-            System.out.print("104.198.30.238");
-            out.print("104.198.30.238 "+Config.SERVERPORT);
+            System.out.println("104.198.30.238");
+            out.print("104.198.30.238 "+Config.SERVERPORT + " ");
 
             if(!this.currentMaster.equals("104.198.30.238")){
                 sendRestoreStateToServer("104.198.30.238");
             }
             this.currentMaster = "104.198.30.238";
         } else if ( rss.isMaster(new ServerAddress("104.197.154.195"))){
-            System.out.print("104.197.154.195 "+Config.SERVERPORT);
+            System.out.println("104.197.154.195 "+Config.SERVERPORT+" ");
             out.print("104.197.154.195");
 
             if(!this.currentMaster.equals("104.197.154.195")){
@@ -136,8 +136,8 @@ public class LoadBalancer extends Thread {
             this.currentMaster = "104.197.154.195";
 
         } else if ( rss.isMaster(new ServerAddress("104.197.239.143"))){
-            System.out.print("104.197.239.143");
-            out.print("104.197.239.143 "+Config.SERVERPORT);
+            System.out.println("104.197.239.143");
+            out.print("104.197.239.143 "+Config.SERVERPORT+ " ");
             if(!this.currentMaster.equals("104.197.239.143")){
                 sendRestoreStateToServer("104.197.239.143");
             }
