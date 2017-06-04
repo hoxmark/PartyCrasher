@@ -1,4 +1,3 @@
-import java.lang.reflect.Array;
 import java.net.*;
 import java.util.*;
 import java.nio.charset.StandardCharsets;
@@ -10,7 +9,7 @@ public class Coordinator extends Thread {
     private ServerSocket serverSocket;
     private Map<String, Date> connectedServers;
 
-    /* Annealing state we return to when annealing */
+    /* Annealing state we return to when endflipAnnealing */
     private PartyState annealingState;
 
     /* State for random flip search */
@@ -33,12 +32,16 @@ public class Coordinator extends Thread {
     private List<TabuPair<Integer, Integer>> endflipValidFlipList;
     private List<TabuPair<Integer, Integer>> endflipTabuList;
 
-    private boolean annealing = false;
-    private int annealingCalculations = 0;
+    private boolean endflipAnnealing = false;
+    private int endflipAnnealingCalculations = 0;
     private int tabuCalculations = 0;
 
+    /* Timers */
+    private Timer connectedServersTimer;
+    private Timer saveStateTimer;
 
-    public Coordinator(int port){
+
+    public Coordinator(int port) {
         try {
             serverSocket = new ServerSocket(port);
         } catch (IOException e) {
@@ -46,39 +49,36 @@ public class Coordinator extends Thread {
         }
         connectedServers = new HashMap<>();
 
-        //
-        // bestClique = new PartyState(0, Integer.MAX_VALUE, "");
-        // bestEndFlipClique = new PartyState(0, Integer.MAX_VALUE, "");
-        // annealingState = new PartyState(0, Integer.MAX_VALUE, "");
-        //
-        // /* Normal tabu search  */
-        // currentTabuSearchClique = new PartyState(0, Integer.MAX_VALUE, "");
-        // bestTabuSearchClique = new PartyState(0, Integer.MAX_VALUE, "");
-        // tabuSearchValidFlipList = new ArrayList<>();
-        // tabuSearchTabuList = new ArrayList<>();
-        //
-        // /* Endflip tabu search */
-        // currentEndFlipTabueClique = new PartyState(0, Integer.MAX_VALUE, "");
-        // bestEndFlipTabuClique = new PartyState(0, Integer.MAX_VALUE, "");
-        // endflipValidFlipList = new ArrayList<>();
-        // endflipTabuList = new ArrayList<>();
+        bestClique = new PartyState(0, Integer.MAX_VALUE, "");
+        bestEndFlipClique = new PartyState(0, Integer.MAX_VALUE, "");
+        annealingState = new PartyState(0, Integer.MAX_VALUE, "");
 
-        // try {
-        //     generateNewWidth();
-        // } catch (Exception e) {
-        //     Logger.logException(e);
-        // }
+        /* Normal tabu search  */
+        currentTabuSearchClique = new PartyState(0, Integer.MAX_VALUE, "");
+        bestTabuSearchClique = new PartyState(0, Integer.MAX_VALUE, "");
+        tabuSearchValidFlipList = new ArrayList<>();
+        tabuSearchTabuList = new ArrayList<>();
+
+        /* Endflip tabu search */
+        currentEndFlipTabueClique = new PartyState(0, Integer.MAX_VALUE, "");
+        bestEndFlipTabuClique = new PartyState(0, Integer.MAX_VALUE, "");
+        endflipValidFlipList = new ArrayList<>();
+        endflipTabuList = new ArrayList<>();
+
+        try {
+            generateNewWidth();
+        } catch (Exception e) {
+            Logger.logException(e);
+        }
 
 
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
+        connectedServersTimer = new Timer();
+        connectedServersTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                 updateConnectedServersMap();
             }
         }, 0, Config.CLIENT_UPDATE_INTERVAL_SECONDS * 1000);
-
-
     }
 
     private void updateConnectedServersMap() {
@@ -113,12 +113,15 @@ public class Coordinator extends Thread {
                 switch (lines[0]) {
                     case "RestoreState":
                         restoreState();
+
+                        /* We should be master now. Start the timer to periodically save state */
+                        startSaveStateTimer();
                         break;
                     case Config.POSTEXAMPLE:
                         postExample(client, lines);
                         break;
                     case Config.GET_NEXT_WORK:
-                        //                        TODO make consistent with the rest
+                        // TODO make consistent with the rest
                         clientId = lines[1];
                         clientAlgorithm = lines[2];
                         clientWidth = lines[3];
@@ -158,12 +161,24 @@ public class Coordinator extends Thread {
         }
     }
 
-    String fileToString(String value) {
+    private void startSaveStateTimer() {
+        saveStateTimer.cancel();
+        saveStateTimer.purge();
+        saveStateTimer = new Timer();
+        saveStateTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                saveState();
+            }
+        }, 0, Config.CLIENT_UPDATE_INTERVAL_SECONDS * 1000);
+    }
+
+    private String fileToString(String value) {
         String filename = ("../counterexamples/" + value + ".txt");
         return readFile(filename, StandardCharsets.UTF_8);
     }
 
-    static String readFile(String path, Charset encoding) {
+    private static String readFile(String path, Charset encoding) {
         byte[] encoded = new byte[0];
         try {
             encoded = Files.readAllBytes(Paths.get(path));
@@ -173,7 +188,7 @@ public class Coordinator extends Thread {
         return new String(encoded, encoding);
     }
 
-    void getTabuList(Socket client, String[] args) {
+    private void getTabuList(Socket client, String[] args) {
         String clientAlgorithm = args[2];
 
 
@@ -203,7 +218,7 @@ public class Coordinator extends Thread {
         }
     }
 
-    void getNextTabuFlipIndex(Socket client, String[] args) {
+    private void getNextTabuFlipIndex(Socket client, String[] args) {
         PrintStream out;
         String clientAlgorithm = args[2];
 
@@ -235,7 +250,7 @@ public class Coordinator extends Thread {
         }
     }
 
-    void getNextWork(Socket client, String clientId, String alg, String clientWidthString, String clientCliqueString) {
+    private void getNextWork(Socket client, String clientId, String alg, String clientWidthString, String clientCliqueString) {
         Logger.logEvent("GET NEXT WORK");
         Logger.logClient(client.getInetAddress().toString(), alg, clientWidthString, clientCliqueString);
 
@@ -246,8 +261,8 @@ public class Coordinator extends Thread {
         try {
             out = new PrintStream(client.getOutputStream(), true);
 
-            // If we 're annealing - return the basis again
-            if (this.annealing) {
+            // If we 're endflipAnnealing - return the basis again
+            if (this.endflipAnnealing) {
                 Logger.logReturnAnnealingState();
                 out.print(this.annealingState.getWidth() + " " + this.annealingState.getCliqueCount() + " "
                         + this.annealingState.getBody());
@@ -302,12 +317,12 @@ public class Coordinator extends Thread {
         }
     }
 
-    boolean checkAndWriteCounterexample(String clientAlgorithm, int clientWidth, int clientCliqueCount, String clientState) {
+    private boolean checkAndWriteCounterexample(String clientAlgorithm, int clientWidth, int clientCliqueCount, String clientState) {
         if (clientCliqueCount == 0 && clientWidth == bestClique.getWidth()) {
             Logger.logNewCounterExample(clientAlgorithm, "" + clientWidth);
 
             File file = new File("../counterexamples/" + clientWidth + ".txt");
-            BufferedWriter writer = null;
+            BufferedWriter writer;
             try {
                 writer = new BufferedWriter(new FileWriter(file));
                 writer.write(clientWidth + " 0 \n");
@@ -324,15 +339,15 @@ public class Coordinator extends Thread {
 
             generateNewWidth();
 
-            this.annealingCalculations = 0;
+            this.endflipAnnealingCalculations = 0;
             this.tabuCalculations = 0;
-            this.annealing = false;
+            this.endflipAnnealing = false;
             return true;
         }
         return false;
     }
 
-    void updateEndFlipTabuState(String clientAlgorithm) {
+    private void updateEndFlipTabuState(String clientAlgorithm) {
         switch (clientAlgorithm) {
             case Config.ENDFLIP_TABU_ALGORITHM_NAME:
                 if (this.endflipValidFlipList.isEmpty()) {
@@ -392,7 +407,7 @@ public class Coordinator extends Thread {
         return randomBody;
     }
 
-    void restartTabuSearchState() {
+    private void restartTabuSearchState() {
         String best = findBestCounterExample();
         int m = Integer.parseInt(best);
 
@@ -416,8 +431,8 @@ public class Coordinator extends Thread {
         bestTabuSearchClique.setBody(randomBody);
     }
 
-    void postTabuExample(Socket client, String[] lines) {
-        String clientId = lines[1];
+    private void postTabuExample(Socket client, String[] lines) {
+        // String clientId = lines[1];
         String clientAlgorithm = lines[2];
         String clientBestFlipIString = lines[3];
         String clientBestFlipJString = lines[4];
@@ -439,7 +454,7 @@ public class Coordinator extends Thread {
         /* Write counterexample if we fount it*/
         if (!checkAndWriteCounterexample(clientAlgorithm, clientWidth, clientCliqueCount, clientState)) {
 
-            if (!this.annealing) {
+            if (!this.endflipAnnealing) {
                 switch (clientAlgorithm) {
                     case Config.TABU_ALGORITHM_NAME:
                         if (clientWidth >= bestTabuSearchClique.getWidth()) {
@@ -480,10 +495,10 @@ public class Coordinator extends Thread {
         }
     }
 
-    void postExample(Socket client, String[] lines) {
+    private void postExample(Socket client, String[] lines) {
 
         //        String clientId, String alg, String width, String clientClique, String calculations, String s
-        String clientId = lines[1];
+        // String clientId = lines[1];
         String clientAlgorithm = lines[2];
         String clientWidthString = lines[3];
         String clientCliqueCountString = lines[4];
@@ -501,32 +516,69 @@ public class Coordinator extends Thread {
         DAO.updateCalculationCount(clientAlgorithm, clientWidth, clientCalculations);
         checkAndWriteCounterexample(clientAlgorithm, clientWidth, clientCliqueCount, clientState);
 
-        // Only process the posted state if we're not in an annealing state
-        if (!this.annealing) {
-            switch (clientAlgorithm) {
-                case Config.BESTLICUQE_ALGORITHM_NAME:
-                    if ((clientWidth >= bestClique.getWidth()) && (clientCliqueCount < bestClique.getCliqueCount())) {
-                        //                        this.annealingCalculations = 0;
-                        bestClique = new PartyState(clientWidth, clientCliqueCount, clientState);
-                        Logger.logBetterCliqueCount(clientAlgorithm, bestClique.getCliqueCount());
-                    }
-                    break;
+        updateAnnealingCalculations(clientAlgorithm, clientCalculations, clientWidth);
 
-                case Config.BESTFLIP_ALGORITHM_NAME:
-                case Config.ENDFLIP_ALGORITHM_NAME:
+        switch (clientAlgorithm) {
+            case Config.BESTLICUQE_ALGORITHM_NAME:
+                if ((clientWidth >= bestClique.getWidth()) && (clientCliqueCount < bestClique.getCliqueCount())) {
+                    bestClique = new PartyState(clientWidth, clientCliqueCount, clientState);
+                    Logger.logBetterCliqueCount(clientAlgorithm, bestClique.getCliqueCount());
+                }
+                break;
+
+            // case Config.BESTFLIP_ALGORITHM_NAME:
+            case Config.ENDFLIP_ALGORITHM_NAME:
+                // Only process the posted state if we're not in an endflipAnnealing state
+                if (!this.endflipAnnealing) {
                     if ((clientWidth >= bestEndFlipClique.getWidth())
                             && (clientCliqueCount < bestEndFlipClique.getCliqueCount())) {
-                        //                        this.annealingCalculations = 0;
+                        this.endflipAnnealingCalculations = 0;
                         bestEndFlipClique = new PartyState(clientWidth, clientCliqueCount, clientState);
                         Logger.logBetterCliqueCount(clientAlgorithm, bestEndFlipClique.getCliqueCount());
                     }
-                    break;
-            }
+                }
+                break;
         }
     }
 
+    private void updateAnnealingCalculations(String clientAlgorithm, int clientCalculations, int clientWidth) {
+        switch (clientAlgorithm) {
+            case Config.ENDFLIP_ALGORITHM_NAME:
+                if (clientWidth == this.bestEndFlipClique.getWidth() && !this.endflipAnnealing) {
+                    this.endflipAnnealingCalculations += clientCalculations;
 
-    void generateNewWidth() {
+                    /* If the new count puts us over the endflipAnnealing threshold, anneal for some time */
+                    if (this.endflipAnnealingCalculations > Config.ANNEALING_THRESHOLD) {
+                        enterAnnealingState();
+                    }
+                }
+                break;
+        }
+    }
+
+    private void enterAnnealingState() {
+        Logger.logEnterState("Annealing");
+        this.endflipAnnealing = true;
+        this.generateNewWidth();
+
+        // Launch a thread that sets endflipAnnealing to false after a timeout
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(Config.ANNEALING_TIMEOUT_MS);
+                } catch (InterruptedException e) {
+                    Logger.logException(e);
+                }
+                Logger.logEnterState("Default");
+                endflipAnnealing = false;
+                endflipAnnealingCalculations = 0;
+            }
+        }).start();
+    }
+
+
+    private void generateNewWidth() {
         String best = findBestCounterExample();
         int m = Integer.parseInt(best);
 
@@ -599,7 +651,7 @@ public class Coordinator extends Thread {
         bestTabuSearchClique.setBody(randomBody);
     }
 
-    PartyState getUniversalBestClique() {
+    private PartyState getUniversalBestClique() {
         ArrayList<PartyState> states = new ArrayList<>();
         states.add(bestClique);
         states.add(bestEndFlipClique);
@@ -613,14 +665,14 @@ public class Coordinator extends Thread {
         return bestState;
     }
 
-    String findBestCounterExample() {
+    private String findBestCounterExample() {
         File folder = new File("../counterexamples/");
         File[] listOfFiles = folder.listFiles();
         List<Integer> counterexamples = new ArrayList<>();
 
-        for (int i = 0; i < listOfFiles.length; i++) {
-            if (listOfFiles[i].isFile()) {
-                String num = listOfFiles[i].getName().split("\\.")[0];
+        for (File file : listOfFiles) {
+            if (file.isFile()) {
+                String num = file.getName().split("\\.")[0];
                 if (!num.trim().isEmpty()) {
                     counterexamples.add(Integer.parseInt(num));
                 }
@@ -637,7 +689,7 @@ public class Coordinator extends Thread {
     }
 
     private void saveState() {
-        if(DAO.isMaster()) {
+        if (DAO.isMaster()) {
             Logger.logString("Saving state");
             DAO.savePartyState("annealingState", annealingState);
             DAO.savePartyState("bestClique", bestClique);
@@ -654,27 +706,31 @@ public class Coordinator extends Thread {
             DAO.saveTabuPair("bestEndFlipTabuFlip", bestEndFlipTabuFlip);
             DAO.saveTabuPairList("endflipValidFlipList", endflipValidFlipList);
             DAO.saveTabuPairList("endflipTabuList", endflipTabuList);
+        } else {
+            /* We are not master anymore. Cancel the save state timer. It will be restarted if we get master again*/
+            Logger.logString("Not master - canceling saveStateTimer");
+            this.saveStateTimer.cancel();
+            this.saveStateTimer.purge();
         }
     }
 
     private void restoreState() {
-
         Logger.logString("Restoring state");
-        annealingState = DAO.loadPartyState("annealingState");
-        bestClique = DAO.loadPartyState("bestClique");
-        bestEndFlipClique = DAO.loadPartyState("bestEndFlipClique");
+        annealingState = DAO.loadPartyState("annealingState") != null ? DAO.loadPartyState("annealingState") : annealingState;
+        bestClique = DAO.loadPartyState("bestClique") != null ? DAO.loadPartyState("bestClique") : bestClique;
+        bestEndFlipClique = DAO.loadPartyState("bestEndFlipClique") != null ? DAO.loadPartyState("bestEndFlipClique") : bestEndFlipClique;
 
-        currentTabuSearchClique = DAO.loadPartyState("currentTabuSearchClique");
-        bestTabuSearchClique = DAO.loadPartyState("bestTabuSearchClique");
-        bestTabuSearchFlip = DAO.loadTabuPair("bestTabuSearchFlip");
-        tabuSearchValidFlipList = DAO.loadTabuPairList("tabuSearchValidFlipList");
-        tabuSearchTabuList = DAO.loadTabuPairList("tabuSearchTabuList");
+        currentTabuSearchClique = DAO.loadPartyState("currentTabuSearchClique") != null ? DAO.loadPartyState("currentTabuSearchClique") : currentTabuSearchClique;
+        bestTabuSearchClique = DAO.loadPartyState("bestTabuSearchClique") != null ? DAO.loadPartyState("bestTabuSearchClique") : bestTabuSearchClique;
+        bestTabuSearchFlip = DAO.loadTabuPair("bestTabuSearchFlip") != null ? DAO.loadTabuPair("bestTabuSearchFlip") : bestTabuSearchFlip;
+        tabuSearchValidFlipList = DAO.loadTabuPairList("tabuSearchValidFlipList") != null ? DAO.loadTabuPairList("tabuSearchValidFlipList") : tabuSearchValidFlipList;
+        tabuSearchTabuList = DAO.loadTabuPairList("tabuSearchTabuList") != null ? DAO.loadTabuPairList("tabuSearchTabuList") : tabuSearchTabuList;
 
-        currentEndFlipTabueClique = DAO.loadPartyState("currentEndFlipTabueClique");
-        bestEndFlipTabuClique = DAO.loadPartyState("bestEndFlipTabuClique");
-        bestEndFlipTabuFlip = DAO.loadTabuPair("bestEndFlipTabuFlip");
-        endflipValidFlipList = DAO.loadTabuPairList("endflipValidFlipList");
-        endflipTabuList = DAO.loadTabuPairList("endflipTabuList");
+        currentEndFlipTabueClique = DAO.loadPartyState("currentEndFlipTabueClique") != null ? DAO.loadPartyState("currentEndFlipTabueClique") : currentEndFlipTabueClique;
+        bestEndFlipTabuClique = DAO.loadPartyState("bestEndFlipTabuClique") != null ? DAO.loadPartyState("bestEndFlipTabuClique") : bestEndFlipTabuClique;
+        bestEndFlipTabuFlip = DAO.loadTabuPair("bestEndFlipTabuFlip") != null ? DAO.loadTabuPair("bestEndFlipTabuFlip") : bestEndFlipTabuFlip;
+        endflipValidFlipList = DAO.loadTabuPairList("endflipValidFlipList") != null ? DAO.loadTabuPairList("endflipValidFlipList") : endflipValidFlipList;
+        endflipTabuList = DAO.loadTabuPairList("endflipTabuList") != null ? DAO.loadTabuPairList("endflipTabuList") : endflipTabuList;
     }
 }
 
