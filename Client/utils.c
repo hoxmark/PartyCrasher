@@ -1,6 +1,8 @@
 #ifndef UTILS_C
 #define UTILS_C
 
+#include <math.h>
+
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -12,19 +14,25 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#include <ctype.h>
+
 // Sleep
 #include <unistd.h>
 
 // Globals
 #include "globals.h"
+#include "queue.c"
 
 #define CHUNK_SIZE 512
 void print_counterexample(int* g, int m);
 
 int build_socket();
-void send_counterexample(char* alg_name, int* g, int m);
+void get_tabu_list();
+int get_next_work();
+void send_counterexample(char* alg_name, int* buffer, int m, int clique_count, int calculations);
 bool send_all(int socket, char* alg_name, int* buffer, size_t length);
 int random_int(int min, int max);
+struct PairTuple get_tabu_flip_index();
 
 int random_int(int min, int max) { return min + rand() % (max - min); }
 
@@ -111,7 +119,7 @@ int build_socket() {
     if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
         perror("Connection failed. Retrying in 20 seconds");
         sleep(20);
-        return build_socket(server_ip, server_port);
+        return build_socket();
     }
 
     // puts("Connected\n");
@@ -144,9 +152,10 @@ int build_socket_to_load_balancer() {
     return sock;
 }
 
-int get_next_work(char* alg_name) {
+
+int get_next_work() {
     int sock = build_socket();
-    char clientMessage[100], server_reply[600000], buf[512];
+    char clientMessage[100], server_reply[600000], buf[CHUNK_SIZE];
 
     sprintf(clientMessage, "GetNextWork %s %s %d %d %d", uuid_str, alg_name, bestState->width, bestState->clique_count, bestState->num_calculations);
 
@@ -161,18 +170,35 @@ int get_next_work(char* alg_name) {
 
     // Receive a reply from the server
     size_t count = 0, i = 0;
-    size_t res = recv(sock, buf, 512, 0);
+    size_t res = recv(sock, buf, CHUNK_SIZE, 0);
     while (res != 0 && count < 600000) {
         for (i = 0; i < res; i++) {
             server_reply[count] = buf[i];
             count++;
         }
-        res = recv(sock, buf, 512, 0);
+        res = recv(sock, buf, CHUNK_SIZE, 0);
     }
     shutdown(sock, 2); // outgoing
     close(sock);
-    if (server_reply[0] != 'C') {
+
+    // N means change algorithm
+    if (server_reply[0] == 'N') {
+        // char first_letter[10];
+        // char new_algorithm[40];
+        // sscanf(server_reply, "%s %s", first_letter, new_algorithm);
+        // if(strcmp(&new_algorithm[0], "TabuSearch") == 0){
+        //     alg_name = "TabuSearch";
+        // }  else if(strcmp(&new_algorithm[0], "EndFlip") == 0){
+        //     alg_name = "EndFlip";
+        // }
+        //
+        // reset_state();
+        // return get_next_work();
+    }
+
+    else if (server_reply[0] != 'C') {
         reset_state();
+
         char m_string[600000];
         sscanf(server_reply, "%d %d %s", &currentState->width, &currentState->clique_count, m_string);
         printf("************************ We got a new work item: %d - %d "
@@ -187,6 +213,12 @@ int get_next_work(char* alg_name) {
 
         update_best_clique();
         // print_counterexample(currentState->g, currentState->width);
+        // If we have tabusearch, get the tabu list
+        // Dirtyfix because the tabu list never reset.
+        // if (strcmp(alg_name, "TabuSearch") == 0 && currentState->clique_count != 2147483647) {
+        // get_tabu_list();
+        // }
+
         return 1;
     } else if (server_reply[0] == 'C') {
         printf("************************ SERVER REPLY: CONTINUE "
@@ -204,10 +236,113 @@ int get_next_work(char* alg_name) {
     }
 }
 
-void send_counterexample(char* alg_name, int* buffer, int m) {
+struct PairTuple get_tabu_flip_index() {
+    struct PairTuple ret;
+    ret.i = 0;
+    ret.j = 0;
+
+    char clientMessage[100], server_reply[600000], buf[CHUNK_SIZE];
+    sprintf(clientMessage, "GetNextTabuFlipIndex %s %s", uuid_str, alg_name);
+
+    printf("%s \n", clientMessage);
+
+    int sock = build_socket();
+
+    if (send(sock, clientMessage, strlen(clientMessage), 0) < 0) {
+        // puts("Send failed");
+    } else {
+        // puts("send succes");
+    }
+
+    shutdown(sock, 1); // outgoing
+
+    // Receive a reply from the server
+    size_t count = 0, i = 0;
+    size_t res = recv(sock, buf, CHUNK_SIZE, 0);
+    while (res != 0 && count < 600000) {
+        for (i = 0; i < res; i++) {
+            server_reply[count] = buf[i];
+            count++;
+        }
+        res = recv(sock, buf, CHUNK_SIZE, 0);
+    }
+    shutdown(sock, 2); // outgoing
+    close(sock);
+
+    if (server_reply[0] != 'W') {
+        sscanf(server_reply, "%d %d", &ret.i, &ret.j);
+        printf("FLIP TO DO: %d %d\n", ret.i, ret.j);
+        return ret;
+    } else {
+        // TODO Check this
+        sleep(10);
+        // return get_endflip_tabu_index();
+        get_next_work();
+        return get_tabu_flip_index();
+    }
+}
+
+void get_tabu_list() {
+    char clientMessage[100], server_reply[600000], buf[CHUNK_SIZE];
+    sprintf(clientMessage, "GetTabuList %s %s", uuid_str, alg_name);
+
+    printf("%s \n", clientMessage);
+
+    int sock = build_socket();
+
+    if (send(sock, clientMessage, strlen(clientMessage), 0) < 0) {
+        // puts("Send failed");
+    } else {
+        // puts("send succes");
+    }
+
+    shutdown(sock, 1); // outgoing
+
+    // Receive a reply from the server
+    size_t count = 0, i = 0;
+    size_t res = recv(sock, buf, CHUNK_SIZE, 0);
+    while (res != 0 && count < 600000) {
+        for (i = 0; i < res; i++) {
+            server_reply[count] = buf[i];
+            count++;
+        }
+        res = recv(sock, buf, CHUNK_SIZE, 0);
+    }
+    shutdown(sock, 2); // outgoing
+    close(sock);
+
+    QueueReset();
+    int total_n, x, y;
+    total_n = x = y = 0;
+    count = 0;
+    int temp, n;
+    char* s = &server_reply[0];
+
+    while (1 == sscanf(s + total_n, "%*[^0123456789]%d%n", &temp, &n)) {
+        if (count % 2 == 0)
+            x = temp;
+        else {
+            y = temp;
+            QueuePut(x, y);
+        }
+        total_n += n;
+        count++;
+        // printf("%d \n", x);
+    }
+
+    QueuePrint();
+}
+
+void send_counterexample(char* alg_name, int* buffer, int m, int clique_count, int calculations) {
     int length = m * m;
     char message_head[100];
-    sprintf(message_head, "PostExample %s %s %d %d %d ", uuid_str, alg_name, bestState->width, bestState->clique_count, bestState->num_calculations);
+
+    // if (strcmp(alg_name, "TabuSearch") == 0) {
+    sprintf(message_head, "PostExample %s %s %d %d %d ", uuid_str, alg_name, m, clique_count, calculations);
+    // } else {
+    // sprintf(message_head, "PostExample %s %s %d %d %d ", uuid_str, alg_name, bestState->width, bestState->clique_count,
+    // bestState->num_calculations);
+    // }
 
     // Copy the contents of the int array to our send body buffer
     char message_body[length];
@@ -216,7 +351,7 @@ void send_counterexample(char* alg_name, int* buffer, int m) {
         sprintf(&message_body[i], "%d", buffer[i]);
     }
 
-    // WHole message we will send
+    // Whole message we will send
     char total_message[strlen(message_head) + length];
 
     for (i = 0; i < strlen(message_head); i++) {
@@ -236,6 +371,41 @@ void send_counterexample(char* alg_name, int* buffer, int m) {
     bestState->num_calculations = 0;
     close(sock);
 }
+
+//
+void send_counterexample_tabu(char* alg_name, struct PairTuple doneFlip, int* buffer, int m, int clique_count, int calculations) {
+    int length = m * m;
+    char message_head[100];
+    sprintf(message_head, "PostTabuExample %s %s %d %d %d %d %d ", uuid_str, alg_name, doneFlip.i, doneFlip.j, m, clique_count, calculations);
+
+    // Copy the contents of the int array to our send body buffer
+    char message_body[length];
+    int i;
+    for (i = 0; i < length; i++) {
+        sprintf(&message_body[i], "%d", buffer[i]);
+    }
+
+    // Whole message we will send
+    char total_message[strlen(message_head) + length];
+
+    for (i = 0; i < strlen(message_head); i++) {
+        total_message[i] = message_head[i];
+    }
+
+    for (i = strlen(message_head); i < length + strlen(message_head); i++) {
+        total_message[i] = message_body[i - strlen(message_head)];
+    }
+
+    printf("%s\n", message_head);
+
+    int sock = build_socket();
+    send(sock, total_message, strlen(total_message), 0);
+
+    // Server has taken our calculations into account - reset counter
+    bestState->num_calculations = 0;
+    close(sock);
+}
+
 
 void getServerIp(){
     printf("GET SERVER IP");
@@ -274,5 +444,33 @@ void getServerIp(){
 }
 
 
+void generate_random_uuid() {
+    int t = 0;
+    char* szTemp = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
+    char* szHex = "0123456789ABCDEF-";
+    int nLen = strlen(szTemp);
+
+    for (t = 0; t < nLen + 1; t++) {
+        int r = rand() % 16;
+        char c = ' ';
+
+        switch (szTemp[t]) {
+        case 'x': {
+            c = szHex[r];
+        } break;
+        case 'y': {
+            c = szHex[(r & 0x03) | 0x08];
+        } break;
+        case '-': {
+            c = '-';
+        } break;
+        case '4': {
+            c = '4';
+        } break;
+        }
+
+        uuid_str[t] = (t < nLen) ? c : 0x00;
+    }
+}
 
 #endif

@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
@@ -65,79 +66,100 @@ void* ftcs_compute(void* arg) {
 
 int main(int argc, char** argv) {
     srand(time(NULL) + getpid());
-    struct timeval begin, end;
+    // struct timeval begin, end;
+    //
+    // int m = 300;
+    // for (int i = 0; i < 100; i++) {
+    //     int row = random_int(0, m);
+    //     int column = random_int(row, m);
+    //     printf("%d %d \n", row, column);
+    // }
 
-    int n_threads = 2;
-    thread_args_t* args[n_threads];
-    pthread_t threads[n_threads];
+    // char *test = "Hei1";
+    // int res = strcmp(test, "Hei2");
+    // printf("%d\n", res);
 
-    char* name = "./counterexamples/300.txt";
-    FILE* file = fopen(name, "r");
+    // const char* s = "(13, 149), (13, 4949499)";
+    // int total_n = 0;
+    // int n;
+    // int i;
+    // while (1 == sscanf(s + total_n, "%*[^0123456789]%d%n", &i, &n)) {
+    //     total_n += n;
+    //     printf("%d\n", i);
+    // }
 
-    int m;
-    int cliques;
-    fscanf(file, "%d", &m);
-    fscanf(file, "%d", &cliques);
-    printf("%d\n", m);
-    g = (int*)malloc(m * m * sizeof(int));
 
-    int i, j;
-    for (i = 0; i < m * m; i++) {
-        fscanf(file, "%d", &g[i]);
-    }
-
-    int width = m / n_threads;
-
-    // print_counterexample(g, m);
-
-    for (j = 0; j < 100; j++) {
-
-        int row = random_int(0, m);
-        int column = random_int(row, m);
-        flip_entry(g, row, column, m);
-
-        // Calculate ptreads
-        gettimeofday(&begin, NULL);
-        for (i = 0; i < n_threads; i++) {
-            args[i] = malloc(sizeof(thread_args_t));
-            args[i]->g = malloc(m * m * sizeof(int));
-            args[i]->id = i;
-            args[i]->m = m;
-            args[i]->from = width * i;
-            // Make sure we do every iteration. last does more
-            if (i == n_threads - 1) {
-                args[i]->to = m - 10 + 1;
-            } else {
-                args[i]->to = width * (i + 1);
-            }
-
-            int k;
-            for(k = 0; k < m * m; k++){
-                args[i]->g[k] = g[k];
-            }
-
-            // printf("%d -> %d\n", args[i]->from, args[i]->to);
-            pthread_create(&threads[i], NULL, ftcs_compute, (void*)args[i]);
-        }
-
-        // void* ret;
-        for (int i = 0; i < n_threads; i++) {
-            pthread_join(threads[i], NULL);
-            // total += (int)ret;
-        }
-        gettimeofday(&end, NULL);
-        double elapsed = (end.tv_sec - begin.tv_sec) + ((end.tv_usec - begin.tv_usec) / 1000000.0);
-        printf("Pthread answer is \t%d in %f seconds\n", total, elapsed);
-
-        gettimeofday(&begin, NULL);
-        int ans = CliqueCount(g, m);
-        gettimeofday(&end, NULL);
-        elapsed = (end.tv_sec - begin.tv_sec) + ((end.tv_usec - begin.tv_usec) / 1000000.0);
-
-        printf("Serial answer is \t%d in %f seconds \n", ans, elapsed);
-        printf("\n");
-        total = 0;
-    }
+    // int n_threads = 2;
+    // thread_args_t* args[n_threads];
+    // pthread_t threads[n_threads];
+    //
+    // char* name = "./counterexamples/300.txt";
+    // FILE* file = fopen(name, "r");
+    //
+    // int m;
+    // int cliques;
+    // fscanf(file, "%d", &m);
+    // fscanf(file, "%d", &cliques);
+    // printf("%d\n", m);
+    // g = (int*)malloc(m * m * sizeof(int));
+    //
+    // int i, j;
+    // for (i = 0; i < m * m; i++) {
+    //     fscanf(file, "%d", &g[i]);
+    // }
+    //
+    // int width = m / n_threads;
+    //
+    // // print_counterexample(g, m);
+    //
+    // for (j = 0; j < 100; j++) {
+    //
+    //     int row = random_int(0, m);
+    //     int column = random_int(row, m);
+    //     flip_entry(g, row, column, m);
+    //
+    //     // Calculate ptreads
+    //     gettimeofday(&begin, NULL);
+    //     for (i = 0; i < n_threads; i++) {
+    //         args[i] = malloc(sizeof(thread_args_t));
+    //         args[i]->g = malloc(m * m * sizeof(int));
+    //         args[i]->id = i;
+    //         args[i]->m = m;
+    //         args[i]->from = width * i;
+    //         // Make sure we do every iteration. last does more
+    //         if (i == n_threads - 1) {
+    //             args[i]->to = m - 10 + 1;
+    //         } else {
+    //             args[i]->to = width * (i + 1);
+    //         }
+    //
+    //         int k;
+    //         for(k = 0; k < m * m; k++){
+    //             args[i]->g[k] = g[k];
+    //         }
+    //
+    //         // printf("%d -> %d\n", args[i]->from, args[i]->to);
+    //         pthread_create(&threads[i], NULL, ftcs_compute, (void*)args[i]);
+    //     }
+    //
+    //     // void* ret;
+    //     for (int i = 0; i < n_threads; i++) {
+    //         pthread_join(threads[i], NULL);
+    //         // total += (int)ret;
+    //     }
+    //     gettimeofday(&end, NULL);
+    //     double elapsed = (end.tv_sec - begin.tv_sec) + ((end.tv_usec - begin.tv_usec) / 1000000.0);
+    //     printf("Pthread answer is \t%d in %f seconds\n", total, elapsed);
+    //
+    //     gettimeofday(&begin, NULL);
+    //     int ans = CliqueCount(g, m);
+    //     gettimeofday(&end, NULL);
+    //     elapsed = (end.tv_sec - begin.tv_sec) + ((end.tv_usec - begin.tv_usec) / 1000000.0);
+    //
+    //     printf("Serial answer is \t%d in %f seconds \n", ans, elapsed);
+    //     printf("\n");
+    //     total = 0;
+    // }
 
     exit(1);
 }

@@ -4,17 +4,16 @@
 #include <sys/time.h>
 
 void end_flip(int num_flips) {
-    char* alg_name = "EndFlip";
+    alg_name = "EndFlip";
     double timediff;
     struct timeval begin, now;
     gettimeofday(&begin, NULL);
 
     reset_state();
-    get_next_work(alg_name);
+    get_next_work();
 
-    int i;
     while (1) {
-        int row, column;
+        int i, row, column;
 
         for (i = 0; i < num_flips; i++) {
             row = 0;
@@ -23,7 +22,7 @@ void end_flip(int num_flips) {
         }
 
         currentState->clique_count = CliqueCountExtend(currentState->g, currentState->width);
-        bestState->num_calculations++;
+        currentState->num_calculations++;
 
         printf("Number of cliques at %d: %d - best is %d\n", currentState->width, currentState->clique_count, bestState->clique_count);
 
@@ -34,15 +33,16 @@ void end_flip(int num_flips) {
         }
 
         if (currentState->clique_count == 0) {
-            send_counterexample(alg_name, currentState->g, currentState->width);
-            get_next_work(alg_name);
+            // send_counterexample(char *alg_name, int *buffer, int m, int clique_count, int calculations)
+            send_counterexample(alg_name, currentState->g, currentState->width, currentState->clique_count, currentState->num_calculations);
+            get_next_work();
         } else {
             gettimeofday(&now, NULL);
             timediff = (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
             if (timediff > update_interval) {
                 gettimeofday(&begin, NULL);
-                send_counterexample(alg_name, currentState->g, currentState->width);
-                get_next_work(alg_name);
+                send_counterexample(alg_name, currentState->g, currentState->width, currentState->clique_count, currentState->num_calculations);
+                get_next_work();
             }
         }
     }
