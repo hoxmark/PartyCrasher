@@ -2,6 +2,8 @@
 #include "globals.h"
 #include "queue.c"
 char* server_ip;
+char* load_balancer_ip;
+int load_balancer_port;
 int server_port;
 int update_interval;
 char uuid_str[40];
@@ -37,13 +39,18 @@ int main(int argc, char** argv) {
     currentState->g = (int*)malloc(sizeof(int));
     bestState->g = (int*)malloc(sizeof(int));
 
-    if (argc != 5)
+    if (argc != 7)
         printf("Wrong number of arguments");
-    else if (argc == 5) {
-        server_ip = argv[1];
-        server_port = atoi(argv[2]);
-        int alg_type = atoi(argv[3]);
-        int arg = atoi(argv[4]);
+    else if (argc == 7) {
+        load_balancer_ip = argv[1];
+        load_balancer_port = atoi(argv[2]);
+        server_ip = argv[3];
+        server_port = atoi(argv[4]);
+        int alg_type = atoi(argv[5]);
+        int arg = atoi(argv[6]);
+
+        getServerIp();
+
         // TODO make a case 1
         switch (alg_type) {
         case 1:

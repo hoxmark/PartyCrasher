@@ -39,7 +39,8 @@ public class Coordinator extends Thread {
     private int annealingCalculations = 0;
     private int tabuCalculations = 0;
 
-    public Coordinator(int port) {
+
+    public Coordinator(int port){
         try {
             serverSocket = new ServerSocket(port);
         } catch (IOException e) {
