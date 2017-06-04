@@ -13,6 +13,11 @@ class DAO {
     static MongoClient mongoClient = new MongoClient("localhost", 27017);
     static DB db = mongoClient.getDB("Calculations");
 
+    public static boolean isMaster(){
+        ReplicaSetStatus rss = mongoClient.getReplicaSetStatus();
+        return rss.isMaster(mongoClient.getAddress());
+    }
+
     public static void savePartyState(String name, PartyState partyState) {
         Gson gson = new Gson();
         String json = gson.toJson(partyState);

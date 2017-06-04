@@ -12,7 +12,8 @@ public class LoadBalancer extends Thread {
     ServerSocket serverSocket;
     static ReplicaSetStatus rss; 
     int numberOfRequests; 
-    int numberOfServers = 3; 
+    int numberOfServers = 3;
+    String currentMaster = "";
     
 
     public LoadBalancer(int port){
@@ -89,6 +90,20 @@ public class LoadBalancer extends Thread {
         }
     }
 
+    public void sendRestoreStateToServer(String ip){
+        int port = 5004;
+        try {
+            Socket server = new Socket(ip, port);
+            System.out.println("Just connected to " + server.getRemoteSocketAddress());
+            OutputStream outToServer = server.getOutputStream();
+            DataOutputStream serverOut = new DataOutputStream(outToServer);
+            serverOut.writeUTF("RestoreState");
+            server.close();
+        }catch(IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void getNewServerIp(Socket client){
         PrintStream out = null;
         try {
@@ -104,12 +119,27 @@ public class LoadBalancer extends Thread {
         if ( rss.isMaster(new ServerAddress("104.198.30.238"))){
             System.out.print("104.198.30.238");
             out.print("104.198.30.238");
+
+            if(!this.currentMaster.equals("104.198.30.238")){
+                sendRestoreStateToServer("104.198.30.238");
+            }
+            this.currentMaster = "104.198.30.238";
         } else if ( rss.isMaster(new ServerAddress("104.197.154.195"))){
             System.out.print("104.197.154.195");
             out.print("104.197.154.195");
+
+            if(!this.currentMaster.equals("104.197.154.195")){
+                sendRestoreStateToServer("104.197.154.195");
+            }
+            this.currentMaster = "104.197.154.195";
+
         } else if ( rss.isMaster(new ServerAddress("104.197.239.143"))){
             System.out.print("104.197.239.143");
             out.print("104.197.239.143");
+            if(!this.currentMaster.equals("104.197.239.143")){
+                sendRestoreStateToServer("104.197.239.143");
+            }
+            this.currentMaster = "104.197.239.143";
         } else {
             System.out.println("ERROR: no Primary DB");
         }        

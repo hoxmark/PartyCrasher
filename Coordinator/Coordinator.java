@@ -46,28 +46,29 @@ public class Coordinator extends Thread {
         }
         connectedServers = new HashMap<>();
 
+        //
+        // bestClique = new PartyState(0, Integer.MAX_VALUE, "");
+        // bestEndFlipClique = new PartyState(0, Integer.MAX_VALUE, "");
+        // annealingState = new PartyState(0, Integer.MAX_VALUE, "");
+        //
+        // /* Normal tabu search  */
+        // currentTabuSearchClique = new PartyState(0, Integer.MAX_VALUE, "");
+        // bestTabuSearchClique = new PartyState(0, Integer.MAX_VALUE, "");
+        // tabuSearchValidFlipList = new ArrayList<>();
+        // tabuSearchTabuList = new ArrayList<>();
+        //
+        // /* Endflip tabu search */
+        // currentEndFlipTabueClique = new PartyState(0, Integer.MAX_VALUE, "");
+        // bestEndFlipTabuClique = new PartyState(0, Integer.MAX_VALUE, "");
+        // endflipValidFlipList = new ArrayList<>();
+        // endflipTabuList = new ArrayList<>();
 
-        bestClique = new PartyState(0, Integer.MAX_VALUE, "");
-        bestEndFlipClique = new PartyState(0, Integer.MAX_VALUE, "");
-        annealingState = new PartyState(0, Integer.MAX_VALUE, "");
+        // try {
+        //     generateNewWidth();
+        // } catch (Exception e) {
+        //     Logger.logException(e);
+        // }
 
-        /* Normal tabu search  */
-        currentTabuSearchClique = new PartyState(0, Integer.MAX_VALUE, "");
-        bestTabuSearchClique = new PartyState(0, Integer.MAX_VALUE, "");
-        tabuSearchValidFlipList = new ArrayList<>();
-        tabuSearchTabuList = new ArrayList<>();
-
-        /* Endflip tabu search */
-        currentEndFlipTabueClique = new PartyState(0, Integer.MAX_VALUE, "");
-        bestEndFlipTabuClique = new PartyState(0, Integer.MAX_VALUE, "");
-        endflipValidFlipList = new ArrayList<>();
-        endflipTabuList = new ArrayList<>();
-
-        try {
-            generateNewWidth();
-        } catch (Exception e) {
-            Logger.logException(e);
-        }
 
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
@@ -77,15 +78,7 @@ public class Coordinator extends Thread {
             }
         }, 0, Config.CLIENT_UPDATE_INTERVAL_SECONDS * 1000);
 
-        restoreState();
 
-        Timer saveStateTimer = new Timer();
-        saveStateTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                saveState();
-            }
-        }, 0, 10 * 1000);
     }
 
     private void updateConnectedServersMap() {
@@ -118,6 +111,9 @@ public class Coordinator extends Thread {
                 this.connectedServers.put(clientId, new Date());
 
                 switch (lines[0]) {
+                    case "RestoreState":
+                        restoreState();
+                        break;
                     case Config.POSTEXAMPLE:
                         postExample(client, lines);
                         break;
@@ -641,25 +637,28 @@ public class Coordinator extends Thread {
     }
 
     private void saveState() {
-        Logger.logString("Saving state");
-        DAO.savePartyState("annealingState", annealingState);
-        DAO.savePartyState("bestClique", bestClique);
-        DAO.savePartyState("bestEndFlipClique", bestEndFlipClique);
+        if(DAO.isMaster()) {
+            Logger.logString("Saving state");
+            DAO.savePartyState("annealingState", annealingState);
+            DAO.savePartyState("bestClique", bestClique);
+            DAO.savePartyState("bestEndFlipClique", bestEndFlipClique);
 
-        DAO.savePartyState("currentTabuSearchClique", currentTabuSearchClique);
-        DAO.savePartyState("bestTabuSearchClique", bestTabuSearchClique);
-        DAO.saveTabuPair("bestTabuSearchFlip", bestTabuSearchFlip);
-        DAO.saveTabuPairList("tabuSearchValidFlipList", tabuSearchValidFlipList);
-        DAO.saveTabuPairList("tabuSearchTabuList", tabuSearchTabuList);
+            DAO.savePartyState("currentTabuSearchClique", currentTabuSearchClique);
+            DAO.savePartyState("bestTabuSearchClique", bestTabuSearchClique);
+            DAO.saveTabuPair("bestTabuSearchFlip", bestTabuSearchFlip);
+            DAO.saveTabuPairList("tabuSearchValidFlipList", tabuSearchValidFlipList);
+            DAO.saveTabuPairList("tabuSearchTabuList", tabuSearchTabuList);
 
-        DAO.savePartyState("currentEndFlipTabueClique", currentEndFlipTabueClique);
-        DAO.savePartyState("bestEndFlipTabuClique", bestEndFlipTabuClique);
-        DAO.saveTabuPair("bestEndFlipTabuFlip", bestEndFlipTabuFlip);
-        DAO.saveTabuPairList("endflipValidFlipList", endflipValidFlipList);
-        DAO.saveTabuPairList("endflipTabuList", endflipTabuList);
+            DAO.savePartyState("currentEndFlipTabueClique", currentEndFlipTabueClique);
+            DAO.savePartyState("bestEndFlipTabuClique", bestEndFlipTabuClique);
+            DAO.saveTabuPair("bestEndFlipTabuFlip", bestEndFlipTabuFlip);
+            DAO.saveTabuPairList("endflipValidFlipList", endflipValidFlipList);
+            DAO.saveTabuPairList("endflipTabuList", endflipTabuList);
+        }
     }
 
     private void restoreState() {
+
         Logger.logString("Restoring state");
         annealingState = DAO.loadPartyState("annealingState");
         bestClique = DAO.loadPartyState("bestClique");
