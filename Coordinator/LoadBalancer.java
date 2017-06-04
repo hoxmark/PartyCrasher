@@ -4,8 +4,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.charset.*;
 import java.io.*;
+import com.mongodb.*;
+
 
 public class LoadBalancer extends Thread {
+    static MongoClient mongoClient;
     ServerSocket serverSocket;
     int numberOfRequests; 
     int numberOfServers = 3; 
@@ -17,6 +20,15 @@ public class LoadBalancer extends Thread {
         } catch (IOException e) {
             Logger.logException(e);
         }
+        // mongoClient = new MongoClient("104.197.154.195", 27017);
+        // ReplicaSetStatus rss = mongoClient.getReplicaSetStatus();
+        // // ReplicaSetStatus rss = mongoClient.getReplicaSetStatus();
+        // // System.out.println(mongoClient.getAllAddress());
+        // // System.out.println(mongoClient.getAddress());
+        // // System.out.println(mongoClient.getConnectPoint());
+        // // System.out.println(mongoClient.getMongoOptions().getReadPreference());
+        // System.out.println("getPrimary()");
+        // System.out.println(mongoClient.getPrimary());
     }
 
     public void run() {
@@ -76,4 +88,6 @@ public class LoadBalancer extends Thread {
         Thread t = new LoadBalancer(port);
         t.start();
     }
+
+    
 }

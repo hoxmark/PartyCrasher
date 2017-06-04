@@ -7,7 +7,8 @@ case "$1" in
     0)
         javac -cp ".:$CURDIR/libs/mongo-java-driver-3.0.0.jar:" ./Coordinator/*.java
         cd Coordinator
-        java -cp ".:$CURDIR/libs/mongo-java-driver-3.0.0.jar:" GreetingServer 2>&1
+        # java -cp ".:$CURDIR/libs/mongo-java-driver-3.0.0.jar:" GreetingServer 2>&1
+        java -cp ".:$CURDIR/libs/mongo-java-driver-3.0.0.jar:" LoadBalancer 2>&1
         ;;
     1 | *)
         mkdir -p logs
