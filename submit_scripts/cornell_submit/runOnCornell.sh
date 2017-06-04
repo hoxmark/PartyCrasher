@@ -1,3 +1,7 @@
+killall client.o
+sudo rm -R test
+mkdir test
+cd test
 sudo apt-get install unzip
 sudo rm -R Client
 sudo rm Client.zip?dl=0
@@ -10,45 +14,45 @@ cd Client
 
 gcc -O3 -o client.o nextwork.c
 
-./client.o 104.198.30.238 5004 1 1 >> log.txt & 
+./client.o 104.198.30.238 5004 4 1 >> log.txt & 
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
-./client.o 104.198.30.238 5004 1 1 >> log.txt &
+./client.o 104.198.30.238 5004 4 1 >> log.txt &
 disown
 
 exit

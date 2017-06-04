@@ -1,1 +1,1 @@
-killall nextwork.o
+killall client.o
