@@ -128,7 +128,7 @@ public class LoadBalancer extends Thread {
             this.currentMaster = "104.198.30.238";
         } else if ( rss.isMaster(new ServerAddress("104.197.154.195"))){
             System.out.println("104.197.154.195 "+Config.SERVERPORT+" ");
-            out.print("104.197.154.195"+Config.SERVERPORT+" ");
+            out.print("104.197.154.195 " +Config.SERVERPORT+" ");
 
             if(!this.currentMaster.equals("104.197.154.195")){
                 sendRestoreStateToServer("104.197.154.195");
