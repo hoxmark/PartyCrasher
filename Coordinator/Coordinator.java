@@ -47,6 +47,7 @@ public class Coordinator extends Thread {
         } catch (IOException e) {
             Logger.logException(e);
         }
+        this.saveStateTimer = new Timer(); 
         connectedServers = new HashMap<>();
 
         bestClique = new PartyState(0, Integer.MAX_VALUE, "");
