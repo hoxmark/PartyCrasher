@@ -1,5 +1,6 @@
+import java.io.Serializable;
 
-class PartyState {
+class PartyState implements Serializable{
     private int width;
     private int cliqueCount;
     private String body;

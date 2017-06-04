@@ -20,6 +20,14 @@ class Config {
     public static final int ANNEALING_TIMEOUT_MS = CLIENT_UPDATE_INTERVAL_SECONDS * 1000;
     public static final String R_CONTINE = "CONTINUE";
     public static final String R_RETRY = "RETRY";
+
+
+    /* Database collection names */
+    public static final String PARTYSTATE_COLLECTION_NAME = "PartyState";
+    public static final String TABUPAIR_COLLECTION_NAME = "TabuPair";
+    public static final String TABUPAIR_LIST_COLLECTION_NAME = "TabuPairList";
+
+    public static final int SAVE_STATE_INTERVAL_SECONDS = 60;
     
     public static final String[] SERVERIPS = {"104.198.30.238", "104.198.30.238", "104.198.30.238"};
 }

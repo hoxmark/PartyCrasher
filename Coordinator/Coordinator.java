@@ -10,7 +10,6 @@ public class Coordinator extends Thread {
     private ServerSocket serverSocket;
     private Map<String, Date> connectedServers;
 
-
     /* Annealing state we return to when annealing */
     private PartyState annealingState;
 
@@ -34,7 +33,6 @@ public class Coordinator extends Thread {
     private List<TabuPair<Integer, Integer>> endflipValidFlipList;
     private List<TabuPair<Integer, Integer>> endflipTabuList;
 
-
     private boolean annealing = false;
     private int annealingCalculations = 0;
     private int tabuCalculations = 0;
@@ -47,6 +45,8 @@ public class Coordinator extends Thread {
             Logger.logException(e);
         }
         connectedServers = new HashMap<>();
+
+
         bestClique = new PartyState(0, Integer.MAX_VALUE, "");
         bestEndFlipClique = new PartyState(0, Integer.MAX_VALUE, "");
         annealingState = new PartyState(0, Integer.MAX_VALUE, "");
@@ -76,6 +76,16 @@ public class Coordinator extends Thread {
                 updateConnectedServersMap();
             }
         }, 0, Config.CLIENT_UPDATE_INTERVAL_SECONDS * 1000);
+
+        restoreState();
+
+        Timer saveStateTimer = new Timer();
+        saveStateTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                saveState();
+            }
+        }, 0, 10 * 1000);
     }
 
     private void updateConnectedServersMap() {
@@ -112,7 +122,7 @@ public class Coordinator extends Thread {
                         postExample(client, lines);
                         break;
                     case Config.GET_NEXT_WORK:
-//                        TODO make consistent with the rest
+                        //                        TODO make consistent with the rest
                         clientId = lines[1];
                         clientAlgorithm = lines[2];
                         clientWidth = lines[3];
@@ -240,7 +250,7 @@ public class Coordinator extends Thread {
         try {
             out = new PrintStream(client.getOutputStream(), true);
 
-            //             If we're annealing - return the basis again
+            // If we 're annealing - return the basis again
             if (this.annealing) {
                 Logger.logReturnAnnealingState();
                 out.print(this.annealingState.getWidth() + " " + this.annealingState.getCliqueCount() + " "
@@ -260,11 +270,11 @@ public class Coordinator extends Thread {
 
                     case Config.BESTFLIP_ALGORITHM_NAME:
                     case Config.ENDFLIP_ALGORITHM_NAME:
-                        //                        if (this.bestEndFlipClique.getCliqueCount() < Config.ENDFLIP_TO_TABU_THRESHOLD) {
+                        // if (this.bestEndFlipClique.getCliqueCount() < Config.ENDFLIP_TO_TABU_THRESHOLD) {
                         //                            /* RETURN SWITCH TO tabu search */
-                        //                            Logger.logString("SWITCHING TO TABUUUU");
-                        //                            out.print("N " + Config.TABU_ALGORITHM_NAME);
-                        //                        } else {
+                        //     Logger.logString("SWITCHING TO TABUUUU");
+                        //     out.print("N " + Config.TABU_ALGORITHM_NAME);
+                        // } else {
                         if (clientWidth == bestEndFlipClique.getWidth()
                                 && clientCliqueCount <= bestEndFlipClique.getCliqueCount()) {
                             out.print(Config.R_CONTINE);
@@ -357,7 +367,7 @@ public class Coordinator extends Thread {
                     this.tabuSearchValidFlipList = new ArrayList<>();
                     this.tabuSearchTabuList.add(this.bestTabuSearchFlip);
                     for (int i = 0; i < this.bestTabuSearchClique.getWidth(); i++) {
-                        for(int j = i; j < this.bestTabuSearchClique.getWidth(); j++){
+                        for (int j = i; j < this.bestTabuSearchClique.getWidth(); j++) {
                             TabuPair<Integer, Integer> pair = new TabuPair<>(i, j);
                             if (!this.tabuSearchTabuList.contains(pair)) this.tabuSearchValidFlipList.add(pair);
                         }
@@ -366,19 +376,19 @@ public class Coordinator extends Thread {
                     Logger.logEvent("New valid flip size is " + this.tabuSearchValidFlipList.size());
 
                     /* If the valid flips are empty, we have to restart */
-                    if(this.tabuSearchValidFlipList.isEmpty()) restartTabuSearchState();
+                    if (this.tabuSearchValidFlipList.isEmpty()) restartTabuSearchState();
                 }
                 break;
         }
     }
 
-    private String generateRandomBody(int m){
+    private String generateRandomBody(int m) {
         String randomBody = "";
-        for(int i = 0; i <= m; i++){
-            for(int j = 0; j <= m; j++){
-                if(j < i ) randomBody += "0";
+        for (int i = 0; i <= m; i++) {
+            for (int j = 0; j <= m; j++) {
+                if (j < i) randomBody += "0";
                 else {
-                    if(new Random().nextBoolean()) randomBody += "1";
+                    if (new Random().nextBoolean()) randomBody += "1";
                     else randomBody += "0";
                 }
             }
@@ -386,7 +396,7 @@ public class Coordinator extends Thread {
         return randomBody;
     }
 
-    void restartTabuSearchState(){
+    void restartTabuSearchState() {
         String best = findBestCounterExample();
         int m = Integer.parseInt(best);
 
@@ -399,8 +409,8 @@ public class Coordinator extends Thread {
         tabuSearchValidFlipList = new ArrayList<>();
         tabuSearchTabuList = new ArrayList<>();
 
-        for(int i = 0; i < m; i++){
-            for(int j = i; j < m; j++){
+        for (int i = 0; i < m; i++) {
+            for (int j = i; j < m; j++) {
                 tabuSearchValidFlipList.add(new TabuPair<>(i, j));
             }
         }
@@ -584,8 +594,8 @@ public class Coordinator extends Thread {
         tabuSearchValidFlipList = new ArrayList<>();
         tabuSearchTabuList = new ArrayList<>();
 
-        for(int i = 0; i < m; i++){
-            for(int j = i; j < m; j++){
+        for (int i = 0; i < m; i++) {
+            for (int j = i; j < m; j++) {
                 tabuSearchValidFlipList.add(new TabuPair<>(i, j));
             }
         }
@@ -624,14 +634,52 @@ public class Coordinator extends Thread {
     }
 
     public static void main(String[] args) {
-        int port = 5004;//Integer.parseInt(args[0]);
+        int port = 5004;
 
         Thread t = new Coordinator(port);
         t.start();
     }
+
+    private void saveState() {
+        Logger.logString("Saving state");
+        DAO.savePartyState("annealingState", annealingState);
+        DAO.savePartyState("bestClique", bestClique);
+        DAO.savePartyState("bestEndFlipClique", bestEndFlipClique);
+
+        DAO.savePartyState("currentTabuSearchClique", currentTabuSearchClique);
+        DAO.savePartyState("bestTabuSearchClique", bestTabuSearchClique);
+        DAO.saveTabuPair("bestTabuSearchFlip", bestTabuSearchFlip);
+        DAO.saveTabuPairList("tabuSearchValidFlipList", tabuSearchValidFlipList);
+        DAO.saveTabuPairList("tabuSearchTabuList", tabuSearchTabuList);
+
+        DAO.savePartyState("currentEndFlipTabueClique", currentEndFlipTabueClique);
+        DAO.savePartyState("bestEndFlipTabuClique", bestEndFlipTabuClique);
+        DAO.saveTabuPair("bestEndFlipTabuFlip", bestEndFlipTabuFlip);
+        DAO.saveTabuPairList("endflipValidFlipList", endflipValidFlipList);
+        DAO.saveTabuPairList("endflipTabuList", endflipTabuList);
+    }
+
+    private void restoreState() {
+        Logger.logString("Restoring state");
+        annealingState = DAO.loadPartyState("annealingState");
+        bestClique = DAO.loadPartyState("bestClique");
+        bestEndFlipClique = DAO.loadPartyState("bestEndFlipClique");
+
+        currentTabuSearchClique = DAO.loadPartyState("currentTabuSearchClique");
+        bestTabuSearchClique = DAO.loadPartyState("bestTabuSearchClique");
+        bestTabuSearchFlip = DAO.loadTabuPair("bestTabuSearchFlip");
+        tabuSearchValidFlipList = DAO.loadTabuPairList("tabuSearchValidFlipList");
+        tabuSearchTabuList = DAO.loadTabuPairList("tabuSearchTabuList");
+
+        currentEndFlipTabueClique = DAO.loadPartyState("currentEndFlipTabueClique");
+        bestEndFlipTabuClique = DAO.loadPartyState("bestEndFlipTabuClique");
+        bestEndFlipTabuFlip = DAO.loadTabuPair("bestEndFlipTabuFlip");
+        endflipValidFlipList = DAO.loadTabuPairList("endflipValidFlipList");
+        endflipTabuList = DAO.loadTabuPairList("endflipTabuList");
+    }
 }
 
-class TabuPair<L, R> {
+class TabuPair<L, R> implements Serializable {
 
     private final L left;
     private final R right;
@@ -648,7 +696,6 @@ class TabuPair<L, R> {
     public R getRight() {
         return right;
     }
-
 
     @Override
     public int hashCode() {
