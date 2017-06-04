@@ -1,18 +1,117 @@
+import com.google.gson.reflect.TypeToken;
 import com.mongodb.*;
+import com.mongodb.client.model.Filters;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import com.google.gson.Gson;
 
 class DAO {
     static MongoClient mongoClient = new MongoClient("localhost", 27017);
+    static DB db = mongoClient.getDB("Calculations");
+
+    public static void savePartyState(String name, PartyState partyState) {
+        Gson gson = new Gson();
+        String json = gson.toJson(partyState);
+
+        BasicDBObject query = new BasicDBObject();
+        query.put("Name", name);
+
+        BasicDBObject object = new BasicDBObject();
+        object.put("Name", name);
+        object.put("Value", json);
+        DBCollection collection = db.getCollection(Config.PARTYSTATE_COLLECTION_NAME);
+        collection.update(query, object, true, false);
+
+    }
+
+    public static void saveTabuPair(String name, TabuPair<Integer, Integer> tabuPair) {
+        Gson gson = new Gson();
+        String json = gson.toJson(tabuPair);
+
+        BasicDBObject query = new BasicDBObject();
+        query.put("Name", name);
+
+        BasicDBObject object = new BasicDBObject();
+        object.put("Name", name);
+        object.put("Value", json);
+        DBCollection collection = db.getCollection(Config.TABUPAIR_COLLECTION_NAME);
+        collection.update(query, object, true, false);
+    }
+
+    public static void saveTabuPairList(String name, List<TabuPair<Integer, Integer>> list) {
+        Gson gson = new Gson();
+        String json = gson.toJson(list);
+
+        BasicDBObject query = new BasicDBObject();
+        query.put("Name", name);
+
+        BasicDBObject object = new BasicDBObject();
+        object.put("Name", name);
+        object.put("Value", json);
+        DBCollection collection = db.getCollection(Config.TABUPAIR_LIST_COLLECTION_NAME);
+        collection.update(query, object, true, false);
+    }
+
+    public static PartyState loadPartyState(String name) {
+        Gson gson = new Gson();
+
+        BasicDBObject query = new BasicDBObject();
+        query.put("Name", name);
+        DBCursor cursor = db.getCollection(Config.PARTYSTATE_COLLECTION_NAME).find(query);
+
+        while (cursor.hasNext()) {
+            BasicDBObject obj = (BasicDBObject) cursor.next();
+            String json = (String)obj.get("Value");
+            PartyState res = gson.fromJson(json, PartyState.class);
+            return res;
+        }
+        return null;
+    }
+
+    public static TabuPair<Integer, Integer> loadTabuPair(String name) {
+        Gson gson = new Gson();
+        Type collectionType = new TypeToken<TabuPair<Integer, Integer>>(){}.getType();
+
+        BasicDBObject query = new BasicDBObject();
+        query.put("Name", name);
+        DBCursor cursor = db.getCollection(Config.TABUPAIR_COLLECTION_NAME).find(query);
+
+        while (cursor.hasNext()) {
+            BasicDBObject obj = (BasicDBObject) cursor.next();
+            String json = (String)obj.get("Value");
+            TabuPair<Integer, Integer> res = gson.fromJson(json, collectionType);
+            return res;
+        }
+        return null;
+    }
+    public static List<TabuPair<Integer, Integer>> loadTabuPairList(String name) {
+        Gson gson = new Gson();
+        Type collectionType = new TypeToken<List<TabuPair<Integer, Integer>>>(){}.getType();
+
+        BasicDBObject query = new BasicDBObject();
+        query.put("Name", name);
+        DBCursor cursor = db.getCollection(Config.TABUPAIR_LIST_COLLECTION_NAME).find(query);
+
+        while (cursor.hasNext()) {
+            BasicDBObject obj = (BasicDBObject) cursor.next();
+            String json = (String)obj.get("Value");
+            List<TabuPair<Integer, Integer>> res = gson.fromJson(json, collectionType);
+            return res;
+        }
+        return null;
+    }
+
 
     public static int updateCalculationCount(String algorithm, int width, int calculations) {
         int ret = 0;
         try {
 
             // Now connect to your databases
-            DB db = mongoClient.getDB("Calculations");
-            
+
             DBCollection collection = db.getCollection("Calculations");
 
             int existing;
