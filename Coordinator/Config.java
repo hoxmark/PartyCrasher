@@ -1,4 +1,5 @@
 class Config {
+    public static final String SERVERPORT = "5004";
     public static final String GETSERVERIP = "GetServerIp";
     public static final String POSTEXAMPLE = "PostExample";
     public static final String POST_TABU = "PostTabuExample";
