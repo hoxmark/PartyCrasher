@@ -28,7 +28,9 @@ int main(int argc, char** argv) {
     generate_random_uuid();
     printf("uuid=%s\n", uuid_str);
 
-    update_interval = 50;
+    // Set socket timeouts
+
+    update_interval = 45;
 
     // Initialize structs
     struct PartyState standard, standard2;
@@ -39,19 +41,17 @@ int main(int argc, char** argv) {
     currentState->g = (int*)malloc(sizeof(int));
     bestState->g = (int*)malloc(sizeof(int));
 
-    if (argc != 7)
+    if (argc != 5)
         printf("Wrong number of arguments");
-    else if (argc == 7) {
+    else {
         load_balancer_ip = argv[1];
         load_balancer_port = atoi(argv[2]);
-        server_ip = argv[3];
-        server_port = atoi(argv[4]);
-        int alg_type = atoi(argv[5]);
-        int arg = atoi(argv[6]);
+        // server_ip = argv[3];
+        // server_port = atoi(argv[4]);
+        int alg_type = atoi(argv[3]);
+        int arg = atoi(argv[4]);
 
         getServerIp();
-
-        // TODO make a case 1
         switch (alg_type) {
         case 1:
             // best_flip();

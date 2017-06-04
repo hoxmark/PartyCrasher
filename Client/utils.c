@@ -29,6 +29,7 @@ void print_counterexample(int* g, int m);
 int build_socket();
 void get_tabu_list();
 int get_next_work();
+void getServerIp();
 void send_counterexample(char* alg_name, int* buffer, int m, int clique_count, int calculations);
 bool send_all(int socket, char* alg_name, int* buffer, size_t length);
 int random_int(int min, int max);
@@ -112,13 +113,25 @@ int build_socket() {
     }
     // puts("Socket created");
 
+    struct timeval timeout;
+    timeout.tv_sec = 15;
+    timeout.tv_usec = 0;
+    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout)) < 0)
+        printf("setsockopt failed\n");
+
+    if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(timeout)) < 0)
+        printf("setsockopt failed\n");
+
     server.sin_addr.s_addr = inet_addr(server_ip);
     server.sin_family = AF_INET;
     server.sin_port = htons(server_port);
     // Connect to remote server
     if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
-        perror("Connection failed. Retrying in 20 seconds");
-        sleep(20);
+        // Socket timed out. Get a new IP from the load balancer
+        perror("Socket error");
+        printf(" Wait for 10 seconds, then get a new IP from load balancer. \n");
+        sleep(10);
+        getServerIp();
         return build_socket();
     }
 
@@ -126,7 +139,7 @@ int build_socket() {
     return sock;
 }
 
-//TODO merge build_socket_to_load_balancer with build_socket
+// TODO merge build_socket_to_load_balancer with build_socket
 int build_socket_to_load_balancer() {
     int sock;
     struct sockaddr_in server;
@@ -136,7 +149,14 @@ int build_socket_to_load_balancer() {
     if (sock == -1) {
         printf("Could not create socket");
     }
-    // puts("Socket created");
+    struct timeval timeout;
+    timeout.tv_sec = 15;
+    timeout.tv_usec = 0;
+    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout)) < 0)
+        printf("setsockopt failed\n");
+
+    if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(timeout)) < 0)
+        printf("setsockopt failed\n");
 
     server.sin_addr.s_addr = inet_addr(load_balancer_ip);
     server.sin_family = AF_INET;
@@ -151,7 +171,6 @@ int build_socket_to_load_balancer() {
     // puts("Connected\n");
     return sock;
 }
-
 
 int get_next_work() {
     int sock = build_socket();
@@ -234,6 +253,7 @@ int get_next_work() {
                "************************\n");
         return 0;
     }
+    return 0;
 }
 
 struct PairTuple get_tabu_flip_index() {
@@ -406,8 +426,7 @@ void send_counterexample_tabu(char* alg_name, struct PairTuple doneFlip, int* bu
     close(sock);
 }
 
-
-void getServerIp(){
+void getServerIp() {
     printf("GET SERVER IP");
 
     int sock = build_socket_to_load_balancer();
@@ -437,12 +456,13 @@ void getServerIp(){
     shutdown(sock, 2); // outgoing
     close(sock);
 
-    sscanf(server_reply, "%s", server_ip);
-        printf("Connection to IP: %s \n",
-               server_ip);
-    
+    printf("%s\n", server_reply);
+    char *temp = (char *)malloc(40 * sizeof(char));
+    sscanf(server_reply, "%s %d", temp, &server_port);
+    // strcpy(server_ip, temp);
+    server_ip = temp;
+    printf("We got a new server IP: %s %d \n", server_ip, server_port);
 }
-
 
 void generate_random_uuid() {
     int t = 0;

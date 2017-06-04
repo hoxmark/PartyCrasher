@@ -171,7 +171,7 @@ public class Coordinator extends Thread {
             public void run() {
                 saveState();
             }
-        }, 0, Config.CLIENT_UPDATE_INTERVAL_SECONDS * 1000);
+        }, 0, Config.SAVE_STATE_INTERVAL_SECONDS * 1000);
     }
 
     private String fileToString(String value) {
@@ -262,31 +262,28 @@ public class Coordinator extends Thread {
         try {
             out = new PrintStream(client.getOutputStream(), true);
 
-            // If we 're endflipAnnealing - return the basis again
-            if (this.endflipAnnealing) {
-                Logger.logReturnAnnealingState();
-                out.print(this.annealingState.getWidth() + " " + this.annealingState.getCliqueCount() + " "
-                        + this.annealingState.getBody());
-            } else {
-                switch (alg) {
-                    case Config.BESTLICUQE_ALGORITHM_NAME:
-                        PartyState bestState = getUniversalBestClique();
-                        if (clientWidth == bestState.getWidth() && clientCliqueCount <= bestState.getCliqueCount()) {
-                            out.print(Config.R_CONTINE);
-                            Logger.logReturnContinue();
-                        } else {
-                            Logger.logReturnClique(bestState.getWidth(), bestState.getCliqueCount());
-                            out.print(bestState.getWidth() + " " + bestState.getCliqueCount() + " " + bestState.getBody());
-                        }
-                        break;
 
-                    case Config.BESTFLIP_ALGORITHM_NAME:
-                    case Config.ENDFLIP_ALGORITHM_NAME:
-                        // if (this.bestEndFlipClique.getCliqueCount() < Config.ENDFLIP_TO_TABU_THRESHOLD) {
-                        //                            /* RETURN SWITCH TO tabu search */
-                        //     Logger.logString("SWITCHING TO TABUUUU");
-                        //     out.print("N " + Config.TABU_ALGORITHM_NAME);
-                        // } else {
+            switch (alg) {
+                case Config.BESTLICUQE_ALGORITHM_NAME:
+                    PartyState bestState = getUniversalBestClique();
+                    if (clientWidth == bestState.getWidth() && clientCliqueCount <= bestState.getCliqueCount()) {
+                        out.print(Config.R_CONTINE);
+                        Logger.logReturnContinue();
+                    } else {
+                        Logger.logReturnClique(bestState.getWidth(), bestState.getCliqueCount());
+                        out.print(bestState.getWidth() + " " + bestState.getCliqueCount() + " " + bestState.getBody());
+                    }
+                    break;
+
+                case Config.BESTFLIP_ALGORITHM_NAME:
+                case Config.ENDFLIP_ALGORITHM_NAME:
+                    // If we 're endflipAnnealing - return the basis again
+                    if (this.endflipAnnealing) {
+                        Logger.logReturnAnnealingState();
+                        out.print(this.annealingState.getWidth() + " " + this.annealingState.getCliqueCount() + " "
+                                + this.annealingState.getBody());
+
+                    } else {
                         if (clientWidth == bestEndFlipClique.getWidth()
                                 && clientCliqueCount <= bestEndFlipClique.getCliqueCount()) {
                             out.print(Config.R_CONTINE);
@@ -296,23 +293,23 @@ public class Coordinator extends Thread {
                                     + bestEndFlipClique.getBody());
                             Logger.logReturnClique(bestEndFlipClique.getWidth(), bestEndFlipClique.getCliqueCount());
                         }
-                        //                        }
-                        break;
+                    }
+                    break;
 
-                    case Config.TABU_ALGORITHM_NAME:
-                        out.print(currentTabuSearchClique.getWidth() + " " + currentTabuSearchClique.getCliqueCount() + " "
-                                + currentTabuSearchClique.getBody());
-                        Logger.logReturnClique(currentTabuSearchClique.getWidth(), currentTabuSearchClique.getCliqueCount());
-                        break;
+                case Config.TABU_ALGORITHM_NAME:
+                    out.print(currentTabuSearchClique.getWidth() + " " + currentTabuSearchClique.getCliqueCount() + " "
+                            + currentTabuSearchClique.getBody());
+                    Logger.logReturnClique(currentTabuSearchClique.getWidth(), currentTabuSearchClique.getCliqueCount());
+                    break;
 
-                    case Config.ENDFLIP_TABU_ALGORITHM_NAME:
-                        out.print(currentEndFlipTabueClique.getWidth() + " " + currentEndFlipTabueClique.getCliqueCount() + " "
-                                + currentEndFlipTabueClique.getBody());
-                        Logger.logReturnClique(currentEndFlipTabueClique.getWidth(), currentEndFlipTabueClique.getCliqueCount());
-                        break;
-                }
-                client.close();
+                case Config.ENDFLIP_TABU_ALGORITHM_NAME:
+                    out.print(currentEndFlipTabueClique.getWidth() + " " + currentEndFlipTabueClique.getCliqueCount() + " "
+                            + currentEndFlipTabueClique.getBody());
+                    Logger.logReturnClique(currentEndFlipTabueClique.getWidth(), currentEndFlipTabueClique.getCliqueCount());
+                    break;
             }
+            client.close();
+
         } catch (IOException e) {
             Logger.logException(e);
         }
@@ -548,34 +545,41 @@ public class Coordinator extends Thread {
                 if (clientWidth == this.bestEndFlipClique.getWidth() && !this.endflipAnnealing) {
                     this.endflipAnnealingCalculations += clientCalculations;
 
+                    double percentage = ((double) this.endflipAnnealingCalculations / (double) Config.ANNEALING_THRESHOLD) * 100;
+                    Logger.logString(String.format("Annealing: %d of %d - %.2f %%", this.endflipAnnealingCalculations, Config.ANNEALING_THRESHOLD, percentage));
+
                     /* If the new count puts us over the endflipAnnealing threshold, anneal for some time */
                     if (this.endflipAnnealingCalculations > Config.ANNEALING_THRESHOLD) {
-                        enterAnnealingState();
+                        enterAnnealingState(clientAlgorithm);
                     }
                 }
                 break;
         }
     }
 
-    private void enterAnnealingState() {
-        Logger.logEnterState("Annealing");
-        this.endflipAnnealing = true;
-        this.generateNewWidth();
+    private void enterAnnealingState(String clientAlgorithm) {
+        switch(clientAlgorithm) {
+            case Config.ENDFLIP_ALGORITHM_NAME:
+                Logger.logEnterState("Endflip Annealing");
+                this.endflipAnnealing = true;
+                this.generateNewWidth();
 
-        // Launch a thread that sets endflipAnnealing to false after a timeout
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(Config.ANNEALING_TIMEOUT_MS);
-                } catch (InterruptedException e) {
-                    Logger.logException(e);
-                }
-                Logger.logEnterState("Default");
-                endflipAnnealing = false;
-                endflipAnnealingCalculations = 0;
-            }
-        }).start();
+                // Launch a thread that sets endflipAnnealing to false after a timeout
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(Config.ANNEALING_TIMEOUT_MS);
+                        } catch (InterruptedException e) {
+                            Logger.logException(e);
+                        }
+                        Logger.logEnterState("Default");
+                        endflipAnnealing = false;
+                        endflipAnnealingCalculations = 0;
+                    }
+                }).start();
+                break;
+        }
     }
 
 
