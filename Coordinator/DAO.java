@@ -10,12 +10,17 @@ import java.util.Map;
 import com.google.gson.Gson;
 
 class DAO {
-    static MongoClient mongoClient = new MongoClient("localhost", 27017);
-    static DB db = mongoClient.getDB("Calculations");
+    static MongoClient mongoClient;
+    static DB db;
 
     public static boolean isMaster(){
         ReplicaSetStatus rss = mongoClient.getReplicaSetStatus();
         return rss.isMaster(mongoClient.getAddress());
+    }
+
+    public static void initializeDatabaseClient(){
+        mongoClient = new MongoClient("localhost", 27017);
+        db = mongoClient.getDB("Calculations");
     }
 
     public static void savePartyState(String name, PartyState partyState) {

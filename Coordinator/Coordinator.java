@@ -717,6 +717,7 @@ public class Coordinator extends Thread {
 
     private void restoreState() {
         Logger.logString("Restoring state");
+        DAO.initializeDatabaseClient();
         annealingState = DAO.loadPartyState("annealingState") != null ? DAO.loadPartyState("annealingState") : annealingState;
         bestClique = DAO.loadPartyState("bestClique") != null ? DAO.loadPartyState("bestClique") : bestClique;
         bestEndFlipClique = DAO.loadPartyState("bestEndFlipClique") != null ? DAO.loadPartyState("bestEndFlipClique") : bestEndFlipClique;
