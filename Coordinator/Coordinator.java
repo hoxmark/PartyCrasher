@@ -594,7 +594,7 @@ public class Coordinator extends Thread {
             case Config.ENDFLIP_ALGORITHM_NAME:
                 Logger.logEnterState("Endflip Annealing");
                 this.endflipAnnealing = true;
-                this.generateNewWidth();
+                // this.generateNewWidth();
 
                 // Launch a thread that sets endflipAnnealing to false after a timeout
                 new Thread(new Runnable() {
