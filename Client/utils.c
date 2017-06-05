@@ -226,7 +226,7 @@ int get_next_work() {
 
     // N means change algorithm
     if (server_reply[0] == 'R') {
-        printf("R\n");
+        // printf("R\n");
         printf("************************ SERVER REPLY: RETRY "
                "************************\n Sleeping for 20 sec\n");
         sleep(20);
@@ -263,7 +263,7 @@ int get_next_work() {
 
         for (i = 0; i < currentState->width * currentState->width; i++) {
             currentState->g[i] = m_string[i] - '0';
-            printf("%d ", currentState->g[i]);
+            // printf("%d ", currentState->g[i]);
         }
 
         update_best_clique();
