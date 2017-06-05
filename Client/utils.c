@@ -196,97 +196,101 @@ int get_next_work() {
     size_t res = recv(sock, buf, CHUNK_SIZE, 0);
     // printf("%d \n", res);
     // int test = 0;
-    if (res == -1)
+    if (res == -1) {
         printf("Oh dear, something went wrong with recv()! %s\n", strerror(errno));
-
-    while (res != 0 && count < 600000) {
-        // for (i = 0; i < res; i++) {
-        //     if (count < 600000) {
-        //         server_reply[count] = buf[i];
-        //         count++;
-        //     } else {
-        //         test = 1;
-        //         res = 0;
-        //         break;
-        //     }
-        // }
-        // if (test)
-        //     break;
-        // res = recv(sock, buf, CHUNK_SIZE, 0);@
-        for (i = 0; i < res; i++) {
-            server_reply[count] = buf[i];
-            count++;
-        }
-        res = recv(sock, buf, CHUNK_SIZE, 0);
-    }
-    shutdown(sock, 2); // outgoing
-    close(sock);
-
-    // printf("before ifs \n");
-
-    // N means change algorithm
-    if (server_reply[0] == 'R') {
-        // printf("R\n");
-        printf("************************ SERVER REPLY: RETRY "
-               "************************\n Sleeping for 20 sec\n");
-        sleep(20);
-        return get_next_work(alg_name);
-    } else if (server_reply[0] == 'N') {
-        // printf("N\n");
-        // char first_letter[10];
-        // char new_algorithm[40];
-        // sscanf(server_reply, "%s %s", first_letter, new_algorithm);
-        // if(strcmp(&new_algorithm[0], "TabuSearch") == 0){
-        //     alg_name = "TabuSearch";
-        // }  else if(strcmp(&new_algorithm[0], "EndFlip") == 0){
-        //     alg_name = "EndFlip";
-        // }
-        //
-        // reset_state();
-        // return get_next_work();
-    }
-
-    else if (server_reply[0] != 'C') {
-        // printf("Not C\n");
-        reset_state();
-
-        char m_string[600000];
-        sscanf(server_reply, "%d %d %s", &currentState->width, &currentState->clique_count, m_string);
-        if (currentState->width == 0)
-            return get_next_work();
-        printf("************************ We got a new work item: %d - %d "
-               "************************\n",
-               currentState->width, currentState->clique_count);
-        printf("%d \n", currentState->width);
-
-        currentState->g = (int*)malloc(currentState->width * currentState->width * sizeof(int));
-
-        for (i = 0; i < currentState->width * currentState->width; i++) {
-            currentState->g[i] = m_string[i] - '0';
-            // printf("%d ", currentState->g[i]);
-        }
-
-        update_best_clique();
-        // print_counterexample(currentState->g, currentState->width);
-        // If we have tabusearch, get the tabu list
-        // Dirtyfix because the tabu list never reset.
-        // if (strcmp(alg_name, "TabuSearch") == 0 && currentState->clique_count != 2147483647) {
-        // get_tabu_list();
-        // }
-
-        return 1;
-    } else if (server_reply[0] == 'C') {
-        // printf("C\n");
-        printf("************************ SERVER REPLY: CONTINUE "
-               "************************\n");
-        return 0;
+        sleep(10);
+        return get_next_work();
     } else {
-        // printf("else\n");
-        printf("************************ SERVER REPLY: UNKNOWN "
-               "************************\n");
+
+        while (res != 0 && count < 600000) {
+            // for (i = 0; i < res; i++) {
+            //     if (count < 600000) {
+            //         server_reply[count] = buf[i];
+            //         count++;
+            //     } else {
+            //         test = 1;
+            //         res = 0;
+            //         break;
+            //     }
+            // }
+            // if (test)
+            //     break;
+            // res = recv(sock, buf, CHUNK_SIZE, 0);@
+            for (i = 0; i < res; i++) {
+                server_reply[count] = buf[i];
+                count++;
+            }
+            res = recv(sock, buf, CHUNK_SIZE, 0);
+        }
+        shutdown(sock, 2); // outgoing
+        close(sock);
+
+        // printf("before ifs \n");
+
+        // N means change algorithm
+        if (server_reply[0] == 'R') {
+            // printf("R\n");
+            printf("************************ SERVER REPLY: RETRY "
+                   "************************\n Sleeping for 20 sec\n");
+            sleep(20);
+            return get_next_work(alg_name);
+        } else if (server_reply[0] == 'N') {
+            // printf("N\n");
+            // char first_letter[10];
+            // char new_algorithm[40];
+            // sscanf(server_reply, "%s %s", first_letter, new_algorithm);
+            // if(strcmp(&new_algorithm[0], "TabuSearch") == 0){
+            //     alg_name = "TabuSearch";
+            // }  else if(strcmp(&new_algorithm[0], "EndFlip") == 0){
+            //     alg_name = "EndFlip";
+            // }
+            //
+            // reset_state();
+            // return get_next_work();
+        }
+
+        else if (server_reply[0] != 'C') {
+            // printf("Not C\n");
+            reset_state();
+
+            char m_string[600000];
+            sscanf(server_reply, "%d %d %s", &currentState->width, &currentState->clique_count, m_string);
+            if (currentState->width == 0)
+                return get_next_work();
+            printf("************************ We got a new work item: %d - %d "
+                   "************************\n",
+                   currentState->width, currentState->clique_count);
+            printf("%d \n", currentState->width);
+
+            currentState->g = (int*)malloc(currentState->width * currentState->width * sizeof(int));
+
+            for (i = 0; i < currentState->width * currentState->width; i++) {
+                currentState->g[i] = m_string[i] - '0';
+                // printf("%d ", currentState->g[i]);
+            }
+
+            update_best_clique();
+            // print_counterexample(currentState->g, currentState->width);
+            // If we have tabusearch, get the tabu list
+            // Dirtyfix because the tabu list never reset.
+            // if (strcmp(alg_name, "TabuSearch") == 0 && currentState->clique_count != 2147483647) {
+            // get_tabu_list();
+            // }
+
+            return 1;
+        } else if (server_reply[0] == 'C') {
+            // printf("C\n");
+            printf("************************ SERVER REPLY: CONTINUE "
+                   "************************\n");
+            return 0;
+        } else {
+            // printf("else\n");
+            printf("************************ SERVER REPLY: UNKNOWN "
+                   "************************\n");
+            return 0;
+        }
         return 0;
     }
-    return 0;
 }
 
 struct PairTuple get_tabu_flip_index() {
