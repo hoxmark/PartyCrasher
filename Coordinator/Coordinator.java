@@ -159,10 +159,12 @@ public class Coordinator extends Thread {
                 }
             }
 
-            try {
-                client.close();
-            } catch (IOException e) {
-                Logger.logException(e);
+            if(client != null) {
+                try {
+                    client.close();
+                } catch (IOException e) {
+                    Logger.logException(e);
+                }
             }
         }
     }
