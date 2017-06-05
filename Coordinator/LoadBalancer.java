@@ -88,6 +88,13 @@ public class LoadBalancer extends Thread {
                     }
                 }
             }
+            if(client != null){
+                try {
+                    client.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
