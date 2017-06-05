@@ -146,7 +146,6 @@ public class Coordinator extends Thread {
                     default:
                         System.out.println("Error: Default in switch");
                 }
-                client.close();
 
             } catch (Exception e) {
                 Logger.logException(e);
@@ -157,6 +156,14 @@ public class Coordinator extends Thread {
                     } catch (IOException e1) {
                         Logger.logException(e1);
                     }
+                }
+            }
+
+            if(client != null) {
+                try {
+                    client.close();
+                } catch (IOException e) {
+                    Logger.logException(e);
                 }
             }
         }
