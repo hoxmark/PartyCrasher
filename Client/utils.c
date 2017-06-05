@@ -289,7 +289,13 @@ struct PairTuple get_tabu_flip_index() {
     shutdown(sock, 2); // outgoing
     close(sock);
 
-    if (server_reply[0] != 'W') {
+    if (server_reply[0] == 'R') {
+        printf("************************ SERVER REPLY: RETRY "
+               "************************\n Sleeping for 20 sec\n");
+        sleep(20);
+        return get_tabu_flip_index();
+
+    } else if (server_reply[0] != 'W') {
         sscanf(server_reply, "%d %d", &ret.i, &ret.j);
         printf("FLIP TO DO: %d %d\n", ret.i, ret.j);
         return ret;
@@ -331,26 +337,34 @@ void get_tabu_list() {
     shutdown(sock, 2); // outgoing
     close(sock);
 
-    QueueReset();
-    int total_n, x, y;
-    total_n = x = y = 0;
-    count = 0;
-    int temp, n;
-    char* s = &server_reply[0];
+    if (server_reply[0] == 'R') {
+        printf("************************ SERVER REPLY: RETRY "
+               "************************\n Sleeping for 20 sec\n");
+        sleep(20);
+        get_tabu_list();
+    } else {
 
-    while (1 == sscanf(s + total_n, "%*[^0123456789]%d%n", &temp, &n)) {
-        if (count % 2 == 0)
-            x = temp;
-        else {
-            y = temp;
-            QueuePut(x, y);
+        QueueReset();
+        int total_n, x, y;
+        total_n = x = y = 0;
+        count = 0;
+        int temp, n;
+        char* s = &server_reply[0];
+
+        while (1 == sscanf(s + total_n, "%*[^0123456789]%d%n", &temp, &n)) {
+            if (count % 2 == 0)
+                x = temp;
+            else {
+                y = temp;
+                QueuePut(x, y);
+            }
+            total_n += n;
+            count++;
+            // printf("%d \n", x);
         }
-        total_n += n;
-        count++;
-        // printf("%d \n", x);
-    }
 
-    QueuePrint();
+        QueuePrint();
+    }
 }
 
 void send_counterexample(char* alg_name, int* buffer, int m, int clique_count, int calculations) {
@@ -443,25 +457,32 @@ void getServerIp() {
 
     shutdown(sock, 1); // outgoing
 
-    // Receive a reply from the server
-    size_t count = 0, i = 0;
-    size_t res = recv(sock, buf, 512, 0);
-    while (res != 0 && count < 600000) {
-        for (i = 0; i < res; i++) {
-            server_reply[count] = buf[i];
-            count++;
+    if (server_reply[0] == 'R') {
+        printf("************************ SERVER REPLY: RETRY "
+               "************************\n Sleeping for 20 sec\n");
+        sleep(20);
+        getServerIp();
+    } else {
+        // Receive a reply from the server
+        size_t count = 0, i = 0;
+        size_t res = recv(sock, buf, 512, 0);
+        while (res != 0 && count < 600000) {
+            for (i = 0; i < res; i++) {
+                server_reply[count] = buf[i];
+                count++;
+            }
+            res = recv(sock, buf, 512, 0);
         }
-        res = recv(sock, buf, 512, 0);
-    }
-    shutdown(sock, 2); // outgoing
-    close(sock);
+        shutdown(sock, 2); // outgoing
+        close(sock);
 
-    printf("%s\n", server_reply);
-    char *temp = (char *)malloc(40 * sizeof(char));
-    sscanf(server_reply, "%s %d", temp, &server_port);
-    // strcpy(server_ip, temp);
-    server_ip = temp;
-    printf("We got a new server IP: %s %d \n", server_ip, server_port);
+        printf("%s\n", server_reply);
+        char* temp = (char*)malloc(40 * sizeof(char));
+        sscanf(server_reply, "%s %d", temp, &server_port);
+        // strcpy(server_ip, temp);
+        server_ip = temp;
+        printf("We got a new server IP: %s %d \n", server_ip, server_port);
+    }
 }
 
 void generate_random_uuid() {
