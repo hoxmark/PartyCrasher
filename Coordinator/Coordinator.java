@@ -224,6 +224,11 @@ public class Coordinator extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        try {
+            client.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void getNextTabuFlipIndex(Socket client, String[] args) {
@@ -253,6 +258,11 @@ public class Coordinator extends Thread {
                 Logger.logEvent("No valid flips left - returning wait ");
                 out.print("W ");
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            client.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -315,10 +325,15 @@ public class Coordinator extends Thread {
                     Logger.logReturnClique(currentEndFlipTabueClique.getWidth(), currentEndFlipTabueClique.getCliqueCount());
                     break;
             }
-            client.close();
 
         } catch (IOException e) {
             Logger.logException(e);
+        }
+
+        try {
+            client.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -498,6 +513,11 @@ public class Coordinator extends Thread {
                 }
             }
         }
+        try {
+            client.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void postExample(Socket client, String[] lines) {
@@ -543,6 +563,11 @@ public class Coordinator extends Thread {
                     }
                 }
                 break;
+        }
+        try {
+            client.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
