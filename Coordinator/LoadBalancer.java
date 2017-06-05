@@ -82,6 +82,7 @@ public class LoadBalancer extends Thread {
                     try {
                         PrintStream out = new PrintStream(client.getOutputStream(), true);
                         out.println(Config.R_RETRY);
+                        client.close();
                     } catch (IOException e1) {
                         Logger.logException(e1);
                     }
@@ -144,7 +145,13 @@ public class LoadBalancer extends Thread {
             this.currentMaster = "104.197.239.143";
         } else {
             System.out.println("ERROR: no Primary DB");
-        }        
+        }
+
+        try {
+            client.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         // out.print(Config.SERVERIPS[toChoose]);
     }
 
