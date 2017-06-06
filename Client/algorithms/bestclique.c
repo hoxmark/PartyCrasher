@@ -2,8 +2,10 @@
 
 #include "../counters/clique-count.c"
 #include "../globals.h"
+#include "../communication.c"
 #include <sys/time.h>
 
+// Algorithm named "RandomFlip in the presentation"
 void best_clique() {
     alg_name = "BestClique";
     double timediff;
@@ -11,7 +13,6 @@ void best_clique() {
     gettimeofday(&begin, NULL);
 
     reset_state();
-
     get_next_work();
 
     while (1) {

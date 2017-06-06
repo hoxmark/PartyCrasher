@@ -1,6 +1,7 @@
 #include "../counters/clique-count-extend.c"
 #include "../globals.h"
 #include "../utils.c"
+#include "../communication.c"
 #include <sys/time.h>
 
 void end_flip(int num_flips) {

@@ -2,6 +2,7 @@
 #include "../globals.h"
 #include "../queue.c"
 #include "../utils.c"
+#include "../communication.c"
 #include <sys/time.h>
 
 void tabu_search() {

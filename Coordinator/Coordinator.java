@@ -72,7 +72,6 @@ public class Coordinator extends Thread {
             Logger.logException(e);
         }
 
-
         connectedServersTimer = new Timer();
         connectedServersTimer.schedule(new TimerTask() {
             @Override
@@ -129,7 +128,6 @@ public class Coordinator extends Thread {
                         clientCliqueCount = lines[4];
                         getNextWork(client, clientId, clientAlgorithm, clientWidth, clientCliqueCount);
                         break;
-
 
                     case Config.POST_TABU:
                         postTabuExample(client, lines);
@@ -198,7 +196,6 @@ public class Coordinator extends Thread {
 
     private void getTabuList(Socket client, String[] args) {
         String clientAlgorithm = args[2];
-
 
         PrintStream out;
         try {
@@ -278,7 +275,6 @@ public class Coordinator extends Thread {
         PrintStream out;
         try {
             out = new PrintStream(client.getOutputStream(), true);
-
 
             switch (alg) {
                 case Config.BESTLICUQE_ALGORITHM_NAME:

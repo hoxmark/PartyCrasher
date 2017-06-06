@@ -123,9 +123,6 @@ public class LoadBalancer extends Thread {
         }
 
         int toChoose = numberOfRequests%numberOfServers;
-        // System.out.println(numberOfRequests);
-        // System.out.println(numberOfServers);
-        // System.out.println(toChoose);
         if ( rss.isMaster(new ServerAddress("104.198.30.238"))){
             System.out.println("104.198.30.238 "+Config.SERVERPORT+" ");
             out.print("104.198.30.238 "+Config.SERVERPORT + " ");
@@ -159,7 +156,6 @@ public class LoadBalancer extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        // out.print(Config.SERVERIPS[toChoose]);
     }
 
     public static void main(String[] args) {
